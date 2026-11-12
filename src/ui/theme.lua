@@ -139,12 +139,12 @@ return function(context)
     local candidates = {
         title = {
             family = "rbxasset://fonts/families/Fondamento.json",
-            enum = Enum.Font.Fondamento,
+            enumName = "Fondamento",
             substitute = Enum.Font.Garamond,
         },
         body = {
             family = "rbxasset://fonts/families/Merriweather.json",
-            enum = Enum.Font.Merriweather,
+            enumName = "Merriweather",
             substitute = Enum.Font.SourceSans,
         },
     }
@@ -169,8 +169,13 @@ return function(context)
                 end
             end
         end
-        if candidate.enum and Enum.Font[candidate.enum.Name] then
-            return { Font = candidate.enum }, "enum"
+        if candidate.enumName then
+            local okEnum, enumItem = pcall(function()
+                return Enum.Font[candidate.enumName]
+            end)
+            if okEnum and enumItem then
+                return { Font = enumItem }, "enum"
+            end
         end
         return { Font = candidate.substitute }, "substitute"
     end

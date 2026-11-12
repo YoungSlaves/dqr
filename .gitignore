@@ -1,6 +1,8 @@
-dqr/cache/
+cache/
 tools/luau/
 tools/__pycache__/
+tools/.tmp-tests/
+tools/.test-out.txt
 harvardd.lua
 .freebuff/
 *.tmp

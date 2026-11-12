@@ -133,6 +133,21 @@ do
             transport = { fn = synTable.request, kind = "request", name = "syn.request" }
         end
     end
+    if not transport then
+        local ok, fluxusTable = pcall(function()
+            local env = type(getgenv) == "function" and getgenv() or _G
+            return rawget(env, "fluxus") or rawget(_G, "fluxus")
+        end)
+        if ok and type(fluxusTable) == "table" and type(fluxusTable.request) == "function" then
+            transport = { fn = fluxusTable.request, kind = "request", name = "fluxus.request" }
+        end
+    end
+    if not transport then
+        local bare = globalOf("http_request")
+        if bare then
+            transport = { fn = bare, kind = "request", name = "http_request" }
+        end
+    end
 end
 
 local function fetch(url)
@@ -407,6 +422,8 @@ local function buildCard(total)
     counterLabel.Position = UDim2.new(1, -12, 1, -10)
     counterLabel.Size = UDim2.fromOffset(160, 16)
     counterLabel.TextXAlignment = Enum.TextXAlignment.Right
+    progress = 0
+    setProgress(0)
     cardShownAt = os.clock()
 end
 
@@ -606,7 +623,14 @@ local function main()
         counterLabel.Text = "offline · cached v" .. tostring(manifest.version)
     end
 
+    if counterLabel then
+        counterLabel.Text = "0/" .. #manifest.modules .. " modules"
+    end
+
     -- compile gate: every module, before any menu Instance exists
+    if type(loadstring) ~= "function" then
+        abort("compile", "loadstring unavailable in this executor", "modules.json", nil)
+    end
     local total = #manifest.modules
     local compiled = {}
     local compiledCount = 0

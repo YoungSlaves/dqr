@@ -84,7 +84,9 @@ return function(context)
     end
 
     function shapes.destroyGuis()
-        for layer, gui in pairs(guis) do
+        -- teardown order is a hard rule: menu, then ambient, then loading
+        for _, layer in ipairs({ "menu", "ambient", "loading" }) do
+            local gui = guis[layer]
             if gui and gui.Parent then
                 pcall(function()
                     gui:Destroy()
@@ -638,6 +640,12 @@ return function(context)
         text.TextColor3 = P.Parchment
         text.Parent = button
         theme.applyFont(text, "body")
+        -- the page code writes .Text on the button after it is built
+        button:GetPropertyChangedSignal("Text"):Connect(function()
+            if button.Text ~= "" and text.Text ~= button.Text then
+                text.Text = button.Text
+            end
+        end)
         return button, text
     end
 

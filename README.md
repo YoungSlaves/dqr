@@ -125,7 +125,7 @@ the version downloaded.
 ## Verification actually run
 
 ```
-$ luau-compile --binary <each of the 23 shipped .lua files>
+$ luau-compile --binary <each of the 26 shipped .lua files>
 compile_failures=0                       (Luau CLI 0.69x, exit 0 per file)
 
 $ python tools/verify_parity.py
@@ -144,6 +144,17 @@ PASS Font.new only in theme resolver, loader card, pre-existing bug report
 PASS fireflies spawn in the ambient layer
 PASS row rotation formula lives in shapes.plankRow
 AUDIT OK
+
+$ python tools/test_logic.py
+PASS request wins first / GET normalises Body / 2xx POST succeeds
+PASS httpget chosen when request is absent / httpget never POSTs
+PASS syn.request is third / fluxus is fourth / bare http_request is last
+PASS no transport -> unavailable / non-2xx fails / empty body fails
+PASS a throwing transport reads as network failure
+PASS font asset -> asset (FontFace only, Font.new twice)
+PASS font asset missing -> enum (Font only, Font.new twice, one boot line)
+PASS both missing -> substitute (Garamond / SourceSans)
+LOGIC OK
 ```
 
 Not run here, because Roblox cannot be launched in this environment: the GUI
@@ -173,3 +184,8 @@ in Roblox before trusting the visual result.
   tweens each, all paused while the window is hidden.
 * The world layer keeps config-driven colours (user's Visuals choices) and
   only remaps hard-coded literals; defaults are untouched for parity.
+* The colour picker's hue strip keeps a full RGB spectrum (`Color3.fromRGB` in
+  `src/ui/kit.lua`). A two-colour forest gradient would make the picker unable
+  to select colours — the one place a literal spectrum is required.
+* Feature bodies still contain the colour defaults and gameplay colours they
+  shipped with; those are user-facing settings, not menu chrome.

@@ -1,5 +1,6 @@
 dqr/cache/
 tools/luau/
+tools/__pycache__/
 harvardd.lua
 .freebuff/
 *.tmp

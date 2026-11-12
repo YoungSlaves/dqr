@@ -25,7 +25,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "harvardd.lua"
-OUT = ROOT / "dqr" / "src" / "features"
+OUT = ROOT / "src" / "features"
 
 # name -> (first body line, last body line)  1-indexed, inclusive, body only
 COMPONENTS = [

@@ -16,7 +16,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "harvardd.lua"
-BUILD = ROOT / "dqr" / "src" / "features"
+BUILD = ROOT / "src" / "features"
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from extract import COMPONENTS, build_body  # noqa: E402
@@ -56,7 +56,7 @@ def main() -> int:
         return keys, labels
 
     src_keys, src_labels = scan([SRC])
-    out_files = sorted(BUILD.glob("*.lua")) + sorted((ROOT / "dqr" / "src" / "ui").glob("*.lua"))
+    out_files = sorted(BUILD.glob("*.lua")) + sorted((ROOT / "src" / "ui").glob("*.lua"))
     out_keys, out_labels = scan(out_files)
 
     only_src = sorted(set(src_keys) - set(out_keys))

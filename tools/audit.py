@@ -7,7 +7,7 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-BUILD = ROOT / "dqr"
+BUILD = ROOT
 FAIL = 0
 
 
@@ -18,7 +18,8 @@ def check(ok: bool, label: str, detail: str = "") -> None:
     print(f"{'PASS' if ok else 'FAIL'} {label}{(' — ' + detail) if detail else ''}")
 
 
-files = sorted(p for p in BUILD.rglob("*.lua"))
+files = [BUILD / "dqr.lua"] + sorted((BUILD / "src").rglob("*.lua"))
+files = [p for p in files if p.exists()]
 text = {p: p.read_text(encoding="utf-8", errors="surrogateescape") for p in files}
 joined = "\n".join(text.values())
 
@@ -33,7 +34,7 @@ def rel(p: pathlib.Path) -> str:
 
 
 trans_hits = [(rel(p), len(transport.findall(t))) for p, t in text.items() if transport.search(t)]
-allowed_transport = {"dqr/dqr.lua", "dqr/src/core/net.lua"}
+allowed_transport = {"dqr.lua", "src/core/net.lua"}
 extra = [h for h in trans_hits if h[0] not in allowed_transport]
 check(not extra, "transport resolved only in loader + core/net", str(extra))
 
@@ -53,12 +54,12 @@ for url in urls:
     print(f"  {kind:70} {url[:90]}")
 
 # ------------------------------------------------------------- shape rules
-menu_gui_files = {"dqr/src/ui/shapes.lua", "dqr/dqr.lua"}
+menu_gui_files = {"src/ui/shapes.lua", "dqr.lua"}
 screen_gui_sites = [rel(p) for p, t in text.items() if 'Instance.new("ScreenGui")' in t]
 # The four remaining screens are pre-existing features (bug report, party
 # lobby x2, cast timer). The menu layer itself is exactly three GUIs.
 check(
-    {"dqr/src/ui/shapes.lua", "dqr/dqr.lua"} <= set(screen_gui_sites),
+    {"src/ui/shapes.lua", "dqr.lua"} <= set(screen_gui_sites),
     "menu layer creates Ambient/Menu/Loading only in shapes + loader bootstrap",
     str(screen_gui_sites),
 )
@@ -73,9 +74,9 @@ rotated = len(re.findall(r"\.Rotation = 45", joined))
 gradients = len(re.findall(r'Instance\.new\("UIGradient"\)', joined))
 print(f"\ncounts: rotated-45 frames={rotated} UIGradient creations={gradients} ScreenGuis={len(gui_creations)}")
 
-check('theme.VINE_IMAGE_ID = nil' in text[BUILD / "src/ui/theme.lua"], "VINE_IMAGE_ID nil")
-check('theme.LEAF_IMAGE_ID = nil' in text[BUILD / "src/ui/theme.lua"], "LEAF_IMAGE_ID nil")
-vine = text[BUILD / "src/ui/shapes.lua"]
+check('theme.VINE_IMAGE_ID = nil' in text[ROOT / "src/ui/theme.lua"], "VINE_IMAGE_ID nil")
+check('theme.LEAF_IMAGE_ID = nil' in text[ROOT / "src/ui/theme.lua"], "LEAF_IMAGE_ID nil")
+vine = text[ROOT / "src/ui/shapes.lua"]
 check(
     "if theme.VINE_IMAGE_ID == nil then" in vine and "if theme.LEAF_IMAGE_ID == nil then" in vine,
     "vine/leaf ImageLabels are behind the nil guard",
@@ -85,12 +86,12 @@ check(
     "only the guarded vine/leaf read an image id",
 )
 
-check("Font.new" in text[BUILD / "src/ui/theme.lua"], "font resolver present")
+check("Font.new" in text[ROOT / "src/ui/theme.lua"], "font resolver present")
 # interfaceMainLoop still holds the pre-existing bug-report font set (BuilderSans);
 # that is feature code, not menu typography, and is left byte-identical.
 font_new_sites = [rel(p) for p, t in text.items() if "Font.new" in t]
 check(
-    set(font_new_sites) <= {"dqr/src/ui/theme.lua", "dqr/dqr.lua", "dqr/src/features/interfaceMainLoop.lua"},
+    set(font_new_sites) <= {"src/ui/theme.lua", "dqr.lua", "src/features/interfaceMainLoop.lua"},
     "Font.new only in theme resolver, loader card, and the pre-existing bug report",
     str(font_new_sites),
 )
@@ -100,7 +101,7 @@ check(bool(firefly_root), "fireflies spawn in the ambient layer")
 
 check(re.search(r"grain\(row, 90\)", joined) is not None, "plank rows carry their own grain")
 check(
-    "row.Rotation = ((index * 7) % 3 - 1) * 0.6" in text[BUILD / "src/ui/shapes.lua"],
+    "row.Rotation = ((index * 7) % 3 - 1) * 0.6" in text[ROOT / "src/ui/shapes.lua"],
     "row rotation formula lives in shapes.plankRow",
 )
 grain_sites = len(re.findall(r"shapes\.grain\(", joined))

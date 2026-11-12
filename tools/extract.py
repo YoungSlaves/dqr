@@ -186,7 +186,7 @@ BLOCKS = {
 }
 
 HEADER = "-- Extracted verbatim from harvardd.lua lines {a}-{b}; presentation owned elsewhere.\n"
-FOOTER = "\nreturn function(context)\n"
+FOOTER = ""
 
 
 def sha(blob: bytes) -> str:
@@ -237,7 +237,7 @@ def main() -> int:
     report = []
     for name, a, b in COMPONENTS:
         body = build_body(lines, name, a, b)
-        text = HEADER.format(a=a, b=b) + body + FOOTER + "end\n"
+        text = HEADER.format(a=a, b=b) + "return function(context)\n" + body + "end\n"
         path = OUT / f"{name}.lua"
         path.write_text(text, encoding="utf-8", errors="surrogateescape", newline="")
         report.append((name, len(body.encode("utf-8", "surrogateescape")), sha(body.encode("utf-8", "surrogateescape"))))

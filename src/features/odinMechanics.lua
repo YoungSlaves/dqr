@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 36828-40294; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local hazardReader = context.RD
     local workspace = game:GetService("Workspace")
@@ -3464,6 +3465,4 @@
         end
         return true
     end
-
-return function(context)
 end

@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 51565-116430; presentation owned elsewhere.
+return function(context)
     local capturedContext = {}
     capturedContext[6] = {}
     argumentHelpers:appendValues(capturedContext[6], 0, context.CFG)
@@ -64863,6 +64864,4 @@
                 helper(argument, false)
             end
         end
-
-return function(context)
 end

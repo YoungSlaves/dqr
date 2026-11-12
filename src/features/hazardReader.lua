@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 7843-36274; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local runtimeState = context.RT
     local attackTiming = context.TIMING
@@ -28429,6 +28430,4 @@
     context.readerStop = readerStop
     context.gameClock = gameClock
     context.nearlyDead = nearlyDead
-
-return function(context)
 end

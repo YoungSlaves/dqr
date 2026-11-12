@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 118107-122925; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local runtimeState = context.RT
     local workspaceService = context.Workspace
@@ -4816,6 +4817,4 @@
         return dungeonName ~= nil and context.EVENT_DIFF[tostring(dungeonName.Value)] ~= nil
     end
     context.QUEUE_DIFFICULTIES = { "Easy", "Medium", "Hard", "Insane", "Nightmare" }
-
-return function(context)
 end

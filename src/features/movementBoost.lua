@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 7739-7841; presentation owned elsewhere.
+return function(context)
     local config, runtimeState = context.CFG, context.RT
     local localPlayer, config2 =
         context.LocalPlayer, { TargetSpeed = 24, MinSpeed = 18, MaxSpeed = 26, FallbackSpeed = 16 }
@@ -100,6 +101,4 @@
             return value
         end,
     }
-
-return function(context)
 end

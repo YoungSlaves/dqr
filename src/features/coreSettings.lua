@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 40-2746; presentation owned elsewhere.
+return function(context)
     context.DEV = false
     if context.DEV then
         if getgenv ~= nil then
@@ -2704,6 +2705,4 @@
     context.PERSIST = persist
     context.snapshot = snapshot
     context.CFG_DEFAULTS = snapshot()
-
-return function(context)
 end

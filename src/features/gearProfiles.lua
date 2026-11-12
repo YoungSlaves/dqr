@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 3280-7737; presentation owned elsewhere.
+return function(context)
     local gearProfiles = {}
     context.GP = gearProfiles
     local sharedValue, sharedValue2 =
@@ -4455,6 +4456,4 @@
         end
         return Color3.fromRGB(255, 110, 120)
     end
-
-return function(context)
 end

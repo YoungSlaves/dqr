@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 2748-3278; presentation owned elsewhere.
+return function(context)
     local function helper(argument)
         local value = {}
         for index, entry in ipairs(argument) do
@@ -528,6 +529,4 @@
     for key, entry2 in pairs(context.BONUS_BOSS) do
         context.BONUS_BOSS_LC[string.lower(key)] = entry2
     end
-
-return function(context)
 end

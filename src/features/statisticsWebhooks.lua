@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 138689-142555; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local runtimeState = context.RT
     local sharedValue = context.HttpService or getService("HttpService")
@@ -3804,6 +3805,4 @@
             end
         end
     end)
-
-return function(context)
 end

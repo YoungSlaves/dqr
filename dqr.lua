@@ -696,6 +696,7 @@ local function main()
 
     local function environment()
         return setmetatable({
+            context = context,
             getService = context.getService,
             argumentHelpers = context.argumentHelpers,
             players = Players,
@@ -709,6 +710,9 @@ local function main()
             pcall(setfenv, chunk, environment())
         end
         local ok, err = pcall(chunk, context)
+        if ok and type(err) == "function" then
+            ok, err = pcall(err, context)
+        end
         if not ok then
             pcall(function()
                 if context.UI and context.UI.teardown then

@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 40296-41270; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local runtimeState, hazardReader = context.RT, context.RD
     local sqrt = math.sqrt
@@ -972,6 +973,4 @@
                 )
             or "-"
     end
-
-return function(context)
 end

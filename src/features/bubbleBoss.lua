@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 41272-51563; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local runtimeState = context.RT
     local hazardReader = context.RD
@@ -10289,6 +10290,4 @@
             tti = bubbleBoss.primary and bubbleBoss.primary.tti or nil,
         }
     end
-
-return function(context)
 end

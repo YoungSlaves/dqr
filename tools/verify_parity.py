@@ -37,8 +37,11 @@ def main() -> int:
             failures += 1
             continue
         text = path.read_text(encoding="utf-8", errors="surrogateescape")
-        inner = text.split("\nreturn function(context)\n", 1)[0]
-        inner = inner.split("\n", 1)[1]
+        inner = text.split("\n", 1)[1]
+        prefix = "return function(context)\n"
+        assert inner.startswith(prefix), f"{path}: missing module wrapper"
+        assert inner.endswith("end\n"), f"{path}: missing module terminator"
+        inner = inner[len(prefix) : -len("end\n")]
         got = sha(inner.encode("utf-8", "surrogateescape"))
         ok = got == want
         failures += 0 if ok else 1

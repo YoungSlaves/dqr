@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 126349-129081; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local dangerGeometry = context.DG
     local hazardReader = context.RD
@@ -2750,6 +2751,4 @@
         end
     end
     context.clearDrawing = clearDrawing
-
-return function(context)
 end

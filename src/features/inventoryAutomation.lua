@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 116432-118105; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local sharedValue, inventoryAutomation =
         context.ReplicatedStorage or getService("ReplicatedStorage"),
@@ -1671,6 +1672,4 @@
             end)
         end
     end)
-
-return function(context)
 end

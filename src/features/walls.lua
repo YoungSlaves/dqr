@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 129083-138687; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local runtimeState, parent = context.RT, game:GetService("Workspace")
     local sharedValue = getService("Lighting")
@@ -9602,6 +9603,4 @@
         walls.logoGroups = nil
         context.log("Walls", "logos removed")
     end
-
-return function(context)
 end

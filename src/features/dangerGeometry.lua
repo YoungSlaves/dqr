@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 36276-36826; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local runtimeState = context.RT
     local hazardReader = context.RD
@@ -548,6 +549,4 @@
         end
         return 0
     end
-
-return function(context)
 end

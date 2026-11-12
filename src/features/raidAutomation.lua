@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 122927-124003; presentation owned elsewhere.
+return function(context)
     local config = context.CFG
     local runtimeState = context.RT
     local sharedValue = getService("Players")
@@ -1074,6 +1075,4 @@
         end
         sharedValue5.Alive = false
     end)
-
-return function(context)
 end

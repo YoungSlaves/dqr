@@ -1,4 +1,5 @@
 -- Extracted verbatim from harvardd.lua lines 142557-164652; presentation owned elsewhere.
+return function(context)
     local uiLibrary = context.UIKit
     local theme = context.UIKit.Theme
     local config = context.CFG
@@ -19637,6 +19638,4 @@
             cur.frames.lastWork = value7
         end
     end)
-
-return function(context)
 end

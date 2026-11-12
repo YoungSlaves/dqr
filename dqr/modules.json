@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "minLoader": 2,
+  "basePath": "https://raw.githubusercontent.com/YoungSlaves/dqr/main/",
+  "modules": [
+    { "name": "services", "path": "src/core/services.lua" },
+    { "name": "net", "path": "src/core/net.lua" },
+    { "name": "coreSettings", "path": "src/features/coreSettings.lua" },
+    { "name": "attackCatalog", "path": "src/features/attackCatalog.lua" },
+    { "name": "gearProfiles", "path": "src/features/gearProfiles.lua" },
+    { "name": "movementBoost", "path": "src/features/movementBoost.lua" },
+    { "name": "hazardReader", "path": "src/features/hazardReader.lua" },
+    { "name": "dangerGeometry", "path": "src/features/dangerGeometry.lua" },
+    { "name": "odinMechanics", "path": "src/features/odinMechanics.lua" },
+    { "name": "bossPhases", "path": "src/features/bossPhases.lua" },
+    { "name": "bubbleBoss", "path": "src/features/bubbleBoss.lua" },
+    { "name": "movementCombat", "path": "src/features/movementCombat.lua" },
+    { "name": "inventoryAutomation", "path": "src/features/inventoryAutomation.lua" },
+    { "name": "partyQueue", "path": "src/features/partyQueue.lua" },
+    { "name": "raidAutomation", "path": "src/features/raidAutomation.lua" },
+    { "name": "uiTheme", "path": "src/ui/theme.lua" },
+    { "name": "uiShapes", "path": "src/ui/shapes.lua" },
+    { "name": "uiPrimitives", "path": "src/ui/primitives.lua" },
+    { "name": "uiKit", "path": "src/ui/kit.lua" },
+    { "name": "uiWindow", "path": "src/ui/window.lua" },
+    { "name": "drawStyle", "path": "src/draw/style.lua" },
+    { "name": "drawing", "path": "src/features/drawing.lua" },
+    { "name": "walls", "path": "src/features/walls.lua" },
+    { "name": "statisticsWebhooks", "path": "src/features/statisticsWebhooks.lua" },
+    { "name": "interfaceMainLoop", "path": "src/features/interfaceMainLoop.lua" }
+  ]
+}

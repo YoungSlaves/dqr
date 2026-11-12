@@ -207,6 +207,7 @@ def apply_interface(body: str) -> str:
         local mapMoss = Instance.new("Frame")
         mapMoss.Name = "Moss"
         mapMoss.BackgroundTransparency = 1
+        mapMoss.BorderSizePixel = 0
         mapMoss.Size = UDim2.new(1, 0, 0, 4)
         mapMoss.ZIndex = 35
         mapMoss.Parent = view

@@ -460,7 +460,7 @@ return function(context)
         content.BorderSizePixel = 0
         content.Position = UDim2.fromOffset(theme.rail.width + 1, 0)
         content.Size = UDim2.new(1, -(theme.rail.width + 1), 1, 0)
-        content.ClipDescendants = true
+        content.ClipsDescendants = true
         content.Parent = body
         local contentLayout = Instance.new("UIGradient")
         contentLayout.Color = ColorSequence.new(P.Moss, P.DeepForest)

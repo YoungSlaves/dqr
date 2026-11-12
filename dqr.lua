@@ -695,13 +695,22 @@ local function main()
     context.DQR_makeGui = guiHost
 
     local function environment()
+        -- `_G` is a shared-value table, not the standard global environment;
+        -- modules still need table/math/string/task/game and friends.
+        local fallback = _G
+        if type(getfenv) == "function" then
+            local ok, env = pcall(getfenv)
+            if ok and type(env) == "table" then
+                fallback = env
+            end
+        end
         return setmetatable({
             context = context,
             getService = context.getService,
             argumentHelpers = context.argumentHelpers,
             players = Players,
             player = player,
-        }, { __index = _G })
+        }, { __index = fallback })
     end
 
     for _, module in ipairs(manifest.modules) do

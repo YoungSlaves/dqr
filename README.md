@@ -139,7 +139,7 @@ PASS HttpService makes no request
 PASS transport resolved only in loader + core/net
 PASS menu layer creates Ambient/Menu/Loading only in shapes + loader bootstrap
 PASS DQRAmbient / DQRRoot / DQRLoading, orders 40/50/50, Sibling everywhere
-counts: rotated-45 frames=3  UIGradient creations=12  menu ScreenGuis=2
+counts: rotated-45 frames=3  UIGradient creations=13  menu ScreenGuis=2
 PASS VINE_IMAGE_ID nil / LEAF_IMAGE_ID nil / vine+leaf behind the nil guard
 PASS Font.new only in theme resolver, loader card, pre-existing bug report
 PASS fireflies spawn in the ambient layer
@@ -170,8 +170,8 @@ in Roblox before trusting the visual result.
 
 * **Page bodies stay in `interfaceMainLoop`.** They are interleaved with loop
   state and closure helpers; slicing them into `ui/sections.lua` would change
-  capture. They are byte-identical and every control they build now renders
-  through the Duskwood kit.
+  capture. The page bodies are unchanged; the bottom-left HUD and the
+  top-right minimap chrome are reskinned in place to the same Duskwood palette.
 * **Exactly three GUIs applies to the menu layer.** Four pre-existing feature
   screens remain (bug report, party lobby ×2, cast timer). Deleting them would
   break features, so they stay.

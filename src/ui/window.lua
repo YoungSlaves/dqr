@@ -903,6 +903,71 @@ return function(context)
             end
         end
 
+        ------------------------------------------------- webhook event notices
+        -- these bindings lived in the old shell; same events, same strings
+        do
+            local webhooks = context.WH
+            if webhooks then
+                local rarities = { legendary = true, ultimate = true, epic = true }
+                local function wrap(name, fn)
+                    local original = webhooks[name]
+                    if type(original) ~= "function" then
+                        return
+                    end
+                    webhooks[name] = function(...)
+                        pcall(fn, ...)
+                        return original(...)
+                    end
+                end
+                wrap("start", function(dungeon, difficulty)
+                    notify(
+                        "run",
+                        "Run started",
+                        ("%s, %s."):format(tostring(dungeon or "Dungeon"), tostring(difficulty or ""))
+                    )
+                end)
+                wrap("finish", function(won)
+                    local run = webhooks.run
+                    local seconds = run and run.at and webhooks.runSecs(run) or nil
+                    local clock = seconds
+                            and ("%d:%02d"):format(math.floor(seconds / 60), seconds % 60)
+                        or ""
+                    if won == false then
+                        notify(
+                            "error",
+                            "Run lost",
+                            (clock ~= "" and clock .. ". " or "") .. "Back to the party."
+                        )
+                    else
+                        notify(
+                            "success",
+                            "Run won",
+                            (clock ~= "" and clock .. ". " or "") .. tostring(run and run.dungeon or "")
+                        )
+                    end
+                end)
+                wrap("item", function(itemName, rarity)
+                    if rarity and rarities[string.lower(tostring(rarity))] then
+                        notify(
+                            string.lower(tostring(rarity)) == "ultimate" and "dropUltimate" or "drop",
+                            tostring(rarity) .. " drop",
+                            tostring(itemName)
+                        )
+                    end
+                end)
+                wrap("rodinClear", function()
+                    notify("success", "Rodin cleared", "The bonus boss is down.")
+                end)
+                wrap("rodinFail", function()
+                    notify("error", "Rodin failed", "The bonus boss got away.")
+                end)
+            end
+        end
+        for _, page in pairs(shell.pages) do
+            page.notify = notify
+            page.notifyExamples = shell.notifyExamples
+        end
+
         ------------------------------------------------------------- welcome card
         do
             local farmBody = shell.pages.Farm and shell.pages.Farm.body

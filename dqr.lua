@@ -270,7 +270,6 @@ local function buildCard(total)
     cardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     cardGui.IgnoreGuiInset = true
     cardGui.ResetOnSpawn = false
-    cardGui.Active = false
     cardGui.Parent = guiHost()
 
     card = Instance.new("Frame")

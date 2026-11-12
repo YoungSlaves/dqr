@@ -68,7 +68,6 @@ return function(context)
         gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         gui.IgnoreGuiInset = true
         gui.ResetOnSpawn = false
-        gui.Active = spec.active
         gui.Parent = parentForGui()
         guis[layer] = gui
         guisCreated += 1

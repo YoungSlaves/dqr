@@ -898,7 +898,7 @@ return function(context)
         slamAwayLean = 35,
         webhook = true,
         webhookUrl = "",
-        webhookUser = "Harvard Labs",
+        webhookUser = "Swangy",
         whStarted = true,
         whLootWait = 3,
         whWins = true,

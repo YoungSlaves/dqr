@@ -1,6 +1,7 @@
-# DQR — Duskwood build
+# Swangy — Duskwood build
 
-Dungeon Quest automation, rebuilt as an **enchanted-forest artifact**: a branch with a hanging
+Dungeon Quest automation, rebuilt as an **enchanted-forest artifact** under the **Swangy** name
+(the hosting repo remains `YoungSlaves/dqr`): a branch with a hanging
 title sign, six hanging-sign tabs on a rope rail, a bark-framed stone window, plank rows, leaf
 buttons, knot toggles, vine sliders and drifting fireflies. Same features, same defaults, same
 saved settings as the monolith it came from — only the presentation layer changed.

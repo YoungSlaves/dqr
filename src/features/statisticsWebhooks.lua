@@ -320,7 +320,7 @@ return function(context)
     local function name2()
         local value = tostring(config.webhookUser or "")
         if value:match("^%s*$") then
-            return "Harvard Labs"
+            return "Swangy"
         end
         return value
     end
@@ -369,7 +369,7 @@ return function(context)
         return true
     end
     local text, color, sharedValue7, color2, sharedValue8 =
-        "2026" .. string.char(194, 169) .. " Harvard Labs", 16705372, 3909981, 15548997, {}
+        "2026" .. string.char(194, 169) .. " Swangy", 16705372, 3909981, 15548997, {}
     sharedValue8.common = string.char(226, 154, 170)
     sharedValue8.uncommon = string.char(240, 159, 159, 162)
     sharedValue8.rare = string.char(240, 159, 148, 181)
@@ -566,7 +566,7 @@ return function(context)
             name = localPlayer and not helper11() and ("%s (@%s)"):format(
                 localPlayer.DisplayName,
                 localPlayer.Name
-            ) or "Harvard Labs",
+            ) or "Swangy",
             icon_url = "https://media.discordapp.net/attachments/1019371259978588321/1547128059545526292/Untitled151_20260906053210.png?ex=6aa44509&is=6aa2f389&hm=c7664b6c0a7136a0d0f8dc498e391bbceb2e0ede6fd3d8ba68ae6a516ce86081&=&format=webp&quality=lossless&width=944&height=944",
         }
     end

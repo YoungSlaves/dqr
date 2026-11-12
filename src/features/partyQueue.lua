@@ -2590,7 +2590,7 @@ return function(context)
             if context.log then
                 context.log(
                     "AltFarm",
-                    ("found running Harvard Labs on this PC - added to the party: %s"):format(
+                    ("found running Swangy on this PC - added to the party: %s"):format(
                         table.concat(value2, ", ")
                     )
                 )

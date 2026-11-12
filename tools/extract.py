@@ -23,6 +23,8 @@ import hashlib
 import pathlib
 import sys
 
+import ui_reskin
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "harvardd.lua"
 OUT = ROOT / "src" / "features"
@@ -228,7 +230,9 @@ def build_body(lines: list[str], name: str, a: int, b: int) -> str:
     body = "".join(tail)
     if not body.endswith("\n"):
         body += "\n"
-    return body
+    if name == "interfaceMainLoop":
+        return ui_reskin.apply_interface(body)
+    return ui_reskin.apply_brand(body)
 
 
 def main() -> int:

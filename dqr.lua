@@ -333,7 +333,7 @@ local function buildCard(total)
     local brand = Instance.new("TextLabel")
     brand.BackgroundTransparency = 1
     brand.Size = UDim2.fromScale(1, 1)
-    brand.Text = "DQR"
+    brand.Text = "Swangy"
     brand.TextSize = 14
     brand.TextColor3 = C.parchment
     pcall(function()
@@ -444,7 +444,7 @@ end
 local function abort(stage, detail, expected, cachedVersion)
     destroyCard()
     error(
-        ("[DQR] abort at %s: %s | expected %s | last valid cached version: %s"):format(
+        ("[Swangy] abort at %s: %s | expected %s | last valid cached version: %s"):format(
             tostring(stage),
             tostring(detail),
             tostring(expected),
@@ -729,7 +729,7 @@ local function main()
                 end
             end)
             destroyCard()
-            error(("[DQR] abort at run %s: %s | expected %s"):format(module.name, tostring(err), module.path), 0)
+            error(("[Swangy] abort at run %s: %s | expected %s"):format(module.name, tostring(err), module.path), 0)
         end
     end
 

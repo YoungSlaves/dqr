@@ -138,8 +138,8 @@ return function(context)
         header.Parent = window
 
         shapes.branch(header, width)
-        local sign, signLabel = shapes.titleSign(header, "Harvard Labs")
-        signLabel.Text = "Harvard Labs"
+        local sign, signLabel = shapes.titleSign(header, "Swangy")
+        signLabel.Text = "Swangy"
         shapes.decorateSign(sign)
 
         -- version chip pinned to the branch's right end, not to the sign
@@ -1850,7 +1850,7 @@ return function(context)
         -- fireflies pause with the window; resume only when it is shown
         shapes.pauseFireflies(true)
         if signLabel then
-            signLabel.Text = "Harvard Labs"
+            signLabel.Text = "Swangy"
         end
         return shell
     end

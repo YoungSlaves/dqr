@@ -1312,7 +1312,7 @@ return function(context)
                     end
                 end)
                 if #value == 0 then
-                    return "Added to the list on their own: every account you put in a party under Parties & Runs, and any account that ran Harvard Labs on this PC."
+                    return "Added to the list on their own: every account you put in a party under Parties & Runs, and any account that ran Swangy on this PC."
                 end
                 local value9 = {}
                 for index3 = 1, math.min(#value, 12), 1 do
@@ -1323,7 +1323,7 @@ return function(context)
                     #value == 1 and "" or "s",
                     table.concat(value9, ", "),
                     #value > 12 and (" and %d more"):format(#value - 12) or ""
-                return ("%s the %d account%s in your parties or running Harvard Labs on this PC (%s%s)."):format(
+                return ("%s the %d account%s in your parties or running Swangy on this PC (%s%s)."):format(
                     "Added to the list on their own:",
                     value10,
                     value11,
@@ -4056,9 +4056,9 @@ return function(context)
                 if context.WH then
                     context.WH.post({
                         username = context.WH.name and context.WH.name()
-                            or tostring(config.webhookUser or "Harvard Labs"),
+                            or tostring(config.webhookUser or "Swangy"),
                         embeds = {
-                            { title = "Test", description = "Harvard Labs is connected.", color = 3909981 },
+                            { title = "Test", description = "Swangy is connected.", color = 3909981 },
                         },
                     })
                 end
@@ -5694,7 +5694,7 @@ return function(context)
                     end)
                     if #value == 0 then
                         helper97(
-                            "No accounts running Harvard Labs on this PC that are not in a party already."
+                            "No accounts running Swangy on this PC that are not in a party already."
                         )
                         return
                     end
@@ -5702,7 +5702,7 @@ return function(context)
                     helper97(("Added %d: %s"):format(#value, table.concat(value, ", ")))
                     helper95()
                 end,
-                "Add every account running Harvard Labs on this PC that is not in a party yet - in this server or any other."
+                "Add every account running Swangy on this PC that is not in a party yet - in this server or any other."
             )
             runsThisAccount.add(
                 "Just me",
@@ -6957,29 +6957,48 @@ return function(context)
             "HUD", 1, Vector2.new(0, 1), UDim2.new(0, 20, 1, -20), UDim2.fromOffset(560, 199)
         hud.ZIndex = 2
         hud.Parent = dungeonAutofarmUi
+        local HP = theme.palette
+        local function hudGrain(parent, rotation)
+            local gradient = Instance.new("UIGradient")
+            gradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, HP.Bark),
+                ColorSequenceKeypoint.new(0.35, HP.Wood),
+                ColorSequenceKeypoint.new(0.7, HP.Bark),
+                ColorSequenceKeypoint.new(1, HP.Wood),
+            })
+            gradient.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0.55),
+                NumberSequenceKeypoint.new(0.35, 0.35),
+                NumberSequenceKeypoint.new(0.7, 0.5),
+                NumberSequenceKeypoint.new(1, 0.3),
+            })
+            gradient.Rotation = rotation or 8
+            gradient.Parent = parent
+            return gradient
+        end
         local function helper120(name2, parent, argument, band, argument2)
-            local parent2 = Instance.new("Frame")
-            parent2.Name, parent2.BackgroundColor3, parent2.BorderSizePixel, parent2.Position, parent2.Size =
-                name2, Color3.new(1, 1, 1), 0, UDim2.fromOffset(0, parent), UDim2.fromOffset(argument, band)
-            parent2.ZIndex = 3
-            parent2.Parent = hud
-            uiLibrary.corner(parent2, argument2)
-            uiLibrary.stroke(parent2, theme.Hairline, 1)
-            uiLibrary.bodyGradient(parent2).Transparency = NumberSequence.new(0)
-            uiLibrary.shadow(parent2, 6, 1.3, 6, 0.04, argument2)
-            parent = Instance.new("CanvasGroup")
-            parent.Name, parent.BackgroundTransparency, parent.BorderSizePixel, parent.Position, parent.Size =
-                "AccentBar", 1, 0, UDim2.fromOffset(0, 0), UDim2.new(1, 0, 0, argument2 + 3)
-            parent.ZIndex = 5
-            parent.Parent = parent2
-            uiLibrary.corner(parent, argument2)
-            band = Instance.new("Frame")
-            band.Name, band.BackgroundColor3, band.BorderSizePixel, band.Size =
-                "Band", Color3.new(1, 1, 1), 0, UDim2.new(1, 0, 0, 3)
-            band.ZIndex = 5
-            band.Parent = parent
-            uiLibrary.accentSweep(band)
-            return parent2
+            local panel = Instance.new("Frame")
+            panel.Name, panel.BackgroundColor3, panel.BorderSizePixel, panel.Position, panel.Size =
+                name2, HP.DeepForest, 0, UDim2.fromOffset(0, parent), UDim2.fromOffset(argument, band)
+            panel.ZIndex = 3
+            panel.Parent = hud
+            uiLibrary.corner(panel, 8)
+            uiLibrary.stroke(panel, HP.Bark, 3)
+            local inner = Instance.new("UIStroke")
+            inner.Color, inner.Thickness, inner.Transparency = HP.LeafLight, 1, 0.55
+            inner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            inner.Parent = panel
+            hudGrain(panel, 8)
+            local moss = Instance.new("Frame")
+            moss.Name = "Moss"
+            moss.BackgroundColor3, moss.BackgroundTransparency, moss.BorderSizePixel =
+                HP.Fern, 0.25, 0
+            moss.Position = UDim2.fromOffset(6, 3)
+            moss.Size = UDim2.new(1, -12, 0, 3)
+            moss.ZIndex = 5
+            moss.Parent = panel
+            uiLibrary.corner(moss, 2)
+            return panel
         end
         local function helper121(
             argument,
@@ -7007,7 +7026,13 @@ return function(context)
             return textControl7
         end
         runsThisAccount = helper120("TitleChip", 0, 326, 34, theme.RadiusMd)
-        helper121(runsThisAccount, "Harvard Labs", "windowChip", 12, 7, 138, 20)
+        helper121(runsThisAccount, "Swangy", "windowChip", 12, 7, 138, 20)
+        local hudLeaf = Instance.new("Frame")
+        hudLeaf.Name, hudLeaf.BackgroundColor3, hudLeaf.BorderSizePixel = "Leaf", HP.LeafLight, 0
+        hudLeaf.AnchorPoint, hudLeaf.Position = Vector2.new(1, 0.5), UDim2.new(1, -8, 0.5, 0)
+        hudLeaf.Size, hudLeaf.Rotation, hudLeaf.ZIndex = UDim2.fromOffset(10, 10), 45, 5
+        hudLeaf.Parent = runsThisAccount
+        uiLibrary.corner(hudLeaf, 999)
         value3, value6 =
             ipairs, {
                 helper121(runsThisAccount, "|", "captionKey", 154, 7, 6, 20, theme.TextMuted),
@@ -7020,6 +7045,22 @@ return function(context)
         local textControl18 = helper121(runsThisAccount, "fps: --", "monoStat", 254, 7, 66, 20)
         local value132 = helper120("Stats", 42, 560, 121, theme.RadiusLg)
         local function helper122(argument, argument2, argument3)
+            local plank = Instance.new("Frame")
+            plank.Name, plank.BackgroundColor3, plank.BackgroundTransparency =
+                "Plank", HP.Wood, 0.35
+            plank.BorderSizePixel = 0
+            plank.Position = UDim2.fromOffset(10, argument2 - 3)
+            plank.Size = UDim2.fromOffset(540, 28)
+            plank.ZIndex = 2
+            plank.Parent = value132
+            uiLibrary.corner(plank, 4)
+            hudGrain(plank, 90)
+            local edge = Instance.new("Frame")
+            edge.BackgroundColor3, edge.BorderSizePixel = HP.Bark, 0
+            edge.Position = UDim2.new(0, 0, 1, -2)
+            edge.Size = UDim2.new(1, 0, 0, 2)
+            edge.ZIndex = 3
+            edge.Parent = plank
             helper121(value132, argument, "rowStat", 14, argument2, 120, 24)
             if argument3 then
                 return helper121(value132, "--", "monoStat", 110, argument2, 436, 24, nil, true)
@@ -7037,11 +7078,11 @@ return function(context)
         statusChip.ZIndex = 3
         statusChip = Instance.new("Frame")
         statusChip.Name, statusChip.BackgroundColor3, statusChip.BorderSizePixel, statusChip.Position, statusChip.Size =
-            "StatusChip", theme.SurfaceChip, 0, UDim2.fromOffset(410, 173), UDim2.fromOffset(150, 24)
+            "StatusChip", HP.Wood, 0, UDim2.fromOffset(410, 173), UDim2.fromOffset(150, 24)
         statusChip.ZIndex = 3
         statusChip.Parent = hud
-        uiLibrary.corner(statusChip, theme.RadiusMd)
-        uiLibrary.stroke(statusChip, theme.Hairline, 1)
+        uiLibrary.corner(statusChip, 4)
+        uiLibrary.stroke(statusChip, HP.Bark, 2)
         local dot = Instance.new("Frame")
         dot.Name, dot.BackgroundColor3, dot.BorderSizePixel, dot.AnchorPoint, dot.Position, dot.Size =
             "Dot", theme.StatusBad, 0, Vector2.new(0, 0.5), UDim2.new(0, 9, 0.5, 0), UDim2.fromOffset(6, 6)
@@ -7057,11 +7098,11 @@ return function(context)
         textControl23.ZIndex = 4
         local clockChip = Instance.new("Frame")
         clockChip.Name, clockChip.BackgroundColor3, clockChip.BorderSizePixel, clockChip.Position, clockChip.Size =
-            "ClockChip", theme.SurfaceChip, 0, UDim2.fromOffset(318, 173), UDim2.fromOffset(84, 24)
+            "ClockChip", HP.Wood, 0, UDim2.fromOffset(318, 173), UDim2.fromOffset(84, 24)
         clockChip.ZIndex = 3
         clockChip.Parent = hud
-        uiLibrary.corner(clockChip, theme.RadiusMd)
-        uiLibrary.stroke(clockChip, theme.Hairline, 1)
+        uiLibrary.corner(clockChip, 4)
+        uiLibrary.stroke(clockChip, HP.Bark, 2)
         local textControl24 = uiLibrary.label(clockChip, "--:--", "captionStat", 2)
         textControl24.Position, textControl24.Size = UDim2.fromOffset(0, 0), UDim2.new(1, 0, 1, 0)
         textControl24.ZIndex = 4
@@ -7247,7 +7288,7 @@ return function(context)
         end
     end
     print(
-        ('DUNGEON AUTOFARM %s "%s"  |  build %s'):format(
+        ('SWANGY %s "%s"  |  build %s'):format(
             ver,
             context.SCRIPT_CODENAME,
             context.SCRIPT_BUILD_DATE
@@ -7966,7 +8007,7 @@ return function(context)
                 helper129(entry4, "<discord id>")
             end
             if type(config.webhookUser) == "string" then
-                if config.webhookUser ~= "Harvard Labs" then
+                if config.webhookUser ~= "Swangy" then
                     helper129(config.webhookUser, "<webhook name>")
                 end
             end
@@ -8135,7 +8176,7 @@ return function(context)
                 value[#value + 1] = ("%-20s %s"):format(argument, helper137(hide(argument2), 4000))
             end
             value[#value + 1] =
-                "Harvard Labs bug report - send every file of this recording (the whole folder) with your report."
+                "Swangy bug report - send every file of this recording (the whole folder) with your report."
             value[#value + 1] = ""
             helper6(
                 "script",
@@ -8627,7 +8668,7 @@ return function(context)
             success, argument = pcall(helper143)
             argument = if success
                 then argument
-                else "Harvard Labs bug report\10header failed: " .. tostring(argument) .. "\10"
+                else "Swangy bug report\10header failed: " .. tostring(argument) .. "\10"
             if not (pcall(writefile, bug.file, argument)) then
                 helper148("Can't record a bug report.", "Could not write " .. bug.file .. ".", 8)
                 return
@@ -9119,7 +9160,7 @@ return function(context)
             context.log("ModDetect", "kicking the account: " .. tostring(argument))
             sharedValue39.noteKick(argument)
             pcall(function()
-                localPlayer:Kick("Harvard Labs mod detection: " .. tostring(argument))
+                localPlayer:Kick("Swangy mod detection: " .. tostring(argument))
             end)
         end
         sharedValue39.clear = function()
@@ -10909,30 +10950,23 @@ return function(context)
             return zone.big == true and config.mapBlankScreen == true
         end
         local sharedValue40, theme2 = config.minimapSize or 220, {}
-        theme2.Bg = Color3.fromRGB(9, 10, 13)
-        theme2.Panel = Color3.fromRGB(16, 18, 23)
-        theme2.Raised = Color3.fromRGB(24, 27, 34)
-        theme2.Stroke = Color3.fromRGB(40, 44, 54)
-        theme2.StrokeSoft = Color3.fromRGB(31, 34, 42)
-        theme2.Text = Color3.fromRGB(236, 238, 243)
-        theme2.Muted = Color3.fromRGB(140, 146, 160)
-        theme2.Faint = Color3.fromRGB(92, 98, 112)
-        theme2.Green = Color3.fromRGB(74, 222, 128)
-        theme2.Red = Color3.fromRGB(248, 92, 100)
-        theme2.Purple = Color3.fromRGB(178, 112, 255)
-        theme2.Pink = Color3.fromRGB(236, 110, 200)
-        theme2.Blue = Color3.fromRGB(112, 140, 255)
-        theme2.White = Color3.fromRGB(245, 246, 250)
+        local MP = theme.palette
+        theme2.Bg = MP.DeepForest
+        theme2.Panel = MP.DeepForest
+        theme2.Raised = MP.Wood
+        theme2.Stroke = MP.Bark
+        theme2.StrokeSoft = MP.Bark
+        theme2.Text = MP.Parchment
+        theme2.Muted = theme.TextSub
+        theme2.Faint = theme.TextMuted
+        theme2.Green = MP.LeafLight
+        theme2.Red = theme.danger
+        theme2.Purple = MP.Firefly
+        theme2.Pink = MP.Fern
+        theme2.Blue = MP.LeafLight
+        theme2.White = MP.Parchment
         zone.theme = theme2
-        theme2.Orb = theme2.Green
-        helper18, green = pcall(function()
-            return context.themeAccent and context.themeAccent()
-        end)
-        if helper18 then
-            if typeof(green) == "Color3" then
-                theme2.Green = green
-            end
-        end
+        theme2.Orb = MP.Firefly
         local sharedValue41 = {}
         pcall(function()
             sharedValue41.Regular, sharedValue41.Medium =
@@ -11035,6 +11069,12 @@ return function(context)
         local function helper162(argument, rotation)
             local new = NumberSequenceKeypoint.new
             return helper155("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, MP.Bark),
+                    ColorSequenceKeypoint.new(0.35, MP.Wood),
+                    ColorSequenceKeypoint.new(0.7, MP.Bark),
+                    ColorSequenceKeypoint.new(1, MP.Wood),
+                }),
                 Rotation = rotation,
                 Transparency = NumberSequence.new({ new(0, 0), new(0.55, 0.2), new(1, 1) }),
             }, argument)
@@ -11080,6 +11120,31 @@ return function(context)
         local stroke2 = Instance.new("UIStroke")
         stroke2.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         stroke2.Parent = view
+        stroke2.Color = MP.Bark
+        stroke2.Thickness = 3
+        local strokeInner = Instance.new("UIStroke")
+        strokeInner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        strokeInner.Color = MP.LeafLight
+        strokeInner.Thickness = 1
+        strokeInner.Transparency = 0.55
+        strokeInner.Parent = view
+        local mapMoss = Instance.new("Frame")
+        mapMoss.Name = "Moss"
+        mapMoss.BackgroundTransparency = 1
+        mapMoss.Size = UDim2.new(1, 0, 0, 4)
+        mapMoss.ZIndex = 35
+        mapMoss.Parent = view
+        for index = 1, 3 do
+            local segment = Instance.new("Frame")
+            segment.Name = "MossSegment"
+            segment.BackgroundColor3 = MP.Fern
+            segment.BackgroundTransparency = 0.25
+            segment.BorderSizePixel = 0
+            segment.Position = UDim2.new((index - 1) / 3, 0, 0, 0)
+            segment.Size = UDim2.new(1 / 3, -2, 0, 4)
+            segment.ZIndex = 35
+            segment.Parent = mapMoss
+        end
         local sharedValue48 = helper155("Frame", {
             Name = "Header",
             BackgroundColor3 = theme2.Panel,
@@ -11110,7 +11175,7 @@ return function(context)
         helper161(sharedValue50, theme2.Green, 8, 1)
         helper160(
             sharedValue50,
-            { Text = "Map view", FontFace = sharedValue41.Bold, TextSize = 18, LayoutOrder = 2 }
+            { Text = "Swangy map", FontFace = sharedValue41.Bold, TextSize = 18, LayoutOrder = 2 }
         )
         helper160(sharedValue50, { Text = "Live", TextSize = 13, TextColor3 = theme2.Muted, LayoutOrder = 3 })
         local sharedValue51 = helper155("Frame", {
@@ -14297,10 +14362,10 @@ return function(context)
                     zone.statsArrow.Position = value and UDim2.new(1, -4, 0.5, 0)
                         or UDim2.new(1, -(sharedValue44 + sharedValue42 + 2), 0.5, 0)
                 end
-                corner.CornerRadius, view.BackgroundColor3 = UDim.new(0, 14), theme2.Panel
+                corner.CornerRadius, view.BackgroundColor3 = UDim.new(0, 10), theme2.Panel
                 view.BackgroundTransparency = 0
                 stroke2.Color = theme2.Stroke
-                stroke2.Thickness = 1
+                stroke2.Thickness = 3
                 stroke2.Transparency = 0
                 pcall(function()
                     stroke2.LineJoinMode = Enum.LineJoinMode.Round
@@ -14331,10 +14396,10 @@ return function(context)
                 statsFrame.Visible = false
                 sharedValue70.Visible = false
                 sharedValue69.Visible = false
-                corner.CornerRadius, view.BackgroundColor3 = UDim.new(0, 14), theme2.Panel
-                view.BackgroundTransparency = 0.1
+                corner.CornerRadius, view.BackgroundColor3 = UDim.new(0, 10), theme2.Panel
+                view.BackgroundTransparency = 0
                 stroke2.Color = theme2.Stroke
-                stroke2.Thickness = 1
+                stroke2.Thickness = 3
                 stroke2.Transparency = 0
                 pcall(function()
                     stroke2.LineJoinMode = Enum.LineJoinMode.Round
@@ -14416,19 +14481,19 @@ return function(context)
                 local mapBtnStroke = zone.mapBtnStroke
                 value5 = zone.big
                 mapBtn.Visible = if value5 then not value5 else config.mapButton ~= false
-                mapBtn.Text = "MINIMAP [" .. tostring(config.mapKey or "M") .. "]"
+                mapBtn.Text = "SWANGY MAP [" .. tostring(config.mapKey or "M") .. "]"
                 pcall(function()
                     mapBtn.FontFace = sharedValue41.Semi
                 end)
-                mapBtn.TextSize, mapBtn.TextColor3, mapBtn.BackgroundColor3 = 13, theme2.Text, theme2.Raised
-                mapBtn.BackgroundTransparency = 0
-                mapBtnStroke.Color = theme2.Stroke
-                mapBtnStroke.Thickness = 1
+                mapBtn.TextSize, mapBtn.TextColor3, mapBtn.BackgroundColor3 = 13, MP.Parchment, MP.Wood
+                mapBtn.BackgroundTransparency = 0.15
+                mapBtnStroke.Color = MP.Bark
+                mapBtnStroke.Thickness = 2
                 mapBtnStroke.Transparency = 0
                 pcall(function()
                     mapBtnStroke.LineJoinMode = Enum.LineJoinMode.Round
                 end)
-                zone.mapBtnCorner.CornerRadius = UDim.new(0, 8)
+                zone.mapBtnCorner.CornerRadius = UDim.new(0, 4)
             end
             zone.lastAt = 0
         end

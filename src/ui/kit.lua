@@ -1442,6 +1442,55 @@ return function(context)
         )
     end
 
+    -- the old uiLibrary exported this; the colour picker and window drag use it
+    local guiService = context.getService("GuiService")
+    local inputService = context.UserInputService
+    local function windowOf(object)
+        local value = object
+        while value and not (value.GetAttribute and value:GetAttribute("hlWin")) do
+            value = value.Parent
+        end
+        return value
+    end
+    local function orderOf(object)
+        local parent = object.Parent
+        return object.ZIndex * 100000 + (parent and table.find(parent:GetChildren(), object) or 0)
+    end
+    local function pointer(input)
+        if input and input.UserInputType == Enum.UserInputType.Touch then
+            local inset = guiService:GetGuiInset()
+            return input.Position.X + inset.X, input.Position.Y + inset.Y
+        end
+        local location = inputService:GetMouseLocation()
+        return location.X, location.Y
+    end
+    local function topWindowAt(x, y, parent)
+        local best, bestOrder
+        for _, child in ipairs(parent:GetChildren()) do
+            if child:IsA("GuiObject") and child.Visible and child:GetAttribute("hlWin") then
+                local pos, size = child.AbsolutePosition, child.AbsoluteSize
+                if x >= pos.X and y >= pos.Y and x <= pos.X + size.X and y <= pos.Y + size.Y then
+                    local order = orderOf(child)
+                    if not best or order > bestOrder then
+                        best, bestOrder = child, order
+                    end
+                end
+            end
+        end
+        return best
+    end
+    local function pressOnTop(object, input)
+        local win = windowOf(object)
+        if not win or not win.Parent then
+            return true
+        end
+        local x, y = pointer(input)
+        local hit = topWindowAt(x, y, win.Parent)
+        return hit == nil or hit == win
+    end
+    kit.pressOnTop = pressOnTop
+    context.pressOnTop = pressOnTop
+
     context.tipTextOf = kit.tipTextOf
     context.UIKit = kit
 end

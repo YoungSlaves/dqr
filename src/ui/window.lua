@@ -74,8 +74,25 @@ return function(context)
 
         local screen = viewport()
         local savedW, savedH = readSavedSize()
-        local width = math.clamp(savedW or theme.window.width, theme.window.minWidth, theme.window.maxWidth)
-        local height = math.clamp(savedH or theme.window.height, theme.window.minHeight, theme.window.maxHeight)
+        local function fitScale()
+            local screenSize = viewport()
+            return math.clamp(
+                math.min((screenSize.X - 24) / theme.window.width, (screenSize.Y - 24) / theme.window.height),
+                0.5,
+                1
+            )
+        end
+        local uiFit = fitScale()
+        local width = math.clamp(
+            savedW or theme.window.width,
+            theme.window.minWidth,
+            math.min(theme.window.maxWidth, math.max(theme.window.minWidth, math.floor(screen.X / uiFit - 20)))
+        )
+        local height = math.clamp(
+            savedH or theme.window.height,
+            theme.window.minHeight,
+            math.min(theme.window.maxHeight, math.max(theme.window.minHeight, math.floor(screen.Y / uiFit - 20)))
+        )
         local body, shown, fading, minimized
         local footerFlies = {}
 
@@ -85,8 +102,8 @@ return function(context)
         holder.BackgroundTransparency = 1
         holder.Size = UDim2.fromOffset(width, height)
         holder.Position = UDim2.fromOffset(
-            math.floor((screen.X - width) / 2),
-            math.floor((screen.Y - height) / 2)
+            math.floor((screen.X - width * uiFit) / 2),
+            math.floor((screen.Y - height * uiFit) / 2)
         )
         holder.Visible = false
         holder.ZIndex = tonumber(config.menuZ) or 20
@@ -95,10 +112,19 @@ return function(context)
         shell.holder = holder
 
         local uiScale = Instance.new("UIScale")
+        uiScale.Scale = uiFit
         uiScale.Parent = holder
+        if workspace.CurrentCamera then
+            bind(workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"), function()
+                uiFit = fitScale()
+                uiScale.Scale = uiFit
+            end)
+        end
 
         local window, innerFrame = shapes.stoneWindow(holder)
         window.Size = UDim2.fromScale(1, 1)
+        window.AnchorPoint = Vector2.new(0.5, 0.5)
+        window.Position = UDim2.fromScale(0.5, 0.5)
         shell.root = window
 
         shapes.decorateWindow(window)
@@ -137,9 +163,36 @@ return function(context)
         local restoreW, restoreH = width, height
         local basePosition = holder.Position
         local dragOffset
+        local dragTarget = Vector2.new(holder.Position.X.Offset, holder.Position.Y.Offset)
+        local dragCurrent = dragTarget
 
         local function applySize()
             holder.Size = UDim2.fromOffset(width, height)
+        end
+
+        -- the old shell exported this; several page bodies call context.Shell.pressable
+        function shell.pressable(object)
+            if not object then
+                return
+            end
+            local scale = Instance.new("UIScale")
+            scale.Scale = 1
+            scale.Parent = object
+            if not object:IsA("GuiButton") then
+                return
+            end
+            local function release()
+                TweenService:Create(
+                    scale,
+                    TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                    { Scale = 1 }
+                ):Play()
+            end
+            bind(object.MouseButton1Down, function()
+                TweenService:Create(scale, TweenInfo.new(0.08, Enum.EasingStyle.Quad), { Scale = 0.96 }):Play()
+            end)
+            bind(object.MouseButton1Up, release)
+            bind(object.MouseLeave, release)
         end
 
         local function minimizeButton()
@@ -153,20 +206,39 @@ return function(context)
             shapes.pauseFireflies(minimized or not shown)
         end
 
+        local restorePosition
         local function maximizeButton()
             maximized = not maximized
             minimized = false
             body.Visible = true
+            local scale = uiScale.Scale > 0 and uiScale.Scale or 1
             if maximized then
                 restoreW, restoreH = width, height
+                restorePosition = Vector2.new(holder.Position.X.Offset, holder.Position.Y.Offset)
                 local screenSize = viewport()
-                width = math.clamp(math.floor(screenSize.X - 48), theme.window.minWidth, theme.window.maxWidth)
-                height = math.clamp(math.floor(screenSize.Y - 48), theme.window.minHeight, theme.window.maxHeight)
+                local margin = 40
+                local maxW = math.max(
+                    theme.window.minWidth,
+                    math.min(theme.window.maxWidth, math.floor(screenSize.X / scale - 20))
+                )
+                local maxH = math.max(
+                    theme.window.minHeight,
+                    math.min(theme.window.maxHeight, math.floor(screenSize.Y / scale - 20))
+                )
+                width = math.clamp(math.floor(screenSize.X / scale - margin * 2), theme.window.minWidth, maxW)
+                height = math.clamp(math.floor(screenSize.Y / scale - margin * 2), theme.window.minHeight, maxH)
+                dragTarget = Vector2.new(math.floor(margin * scale), math.floor(margin * scale))
             else
                 width, height = restoreW, restoreH
+                if restorePosition then
+                    dragTarget = restorePosition
+                end
             end
-            applySize()
-            writeSavedSize(width, height)
+            TweenService:Create(
+                holder,
+                TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                { Size = UDim2.fromOffset(width, height) }
+            ):Play()
         end
 
         local function closeButtonAction()
@@ -223,6 +295,18 @@ return function(context)
             end
             glyph.Parent = target
             target.MouseButton1Click:Connect(spec.handler)
+            shell.pressable(target)
+            local leafFill = leaf.BackgroundColor3
+            bind(target.MouseEnter, function()
+                TweenService:Create(
+                    leaf,
+                    TweenInfo.new(0.14),
+                    { BackgroundColor3 = leafFill:Lerp(Color3.new(1, 1, 1), 0.18) }
+                ):Play()
+            end)
+            bind(target.MouseLeave, function()
+                TweenService:Create(leaf, TweenInfo.new(0.2), { BackgroundColor3 = leafFill }):Play()
+            end)
             prim.tip(target, spec.hint)
         end
 
@@ -233,7 +317,13 @@ return function(context)
         grip.Position = UDim2.new(1, -4, 1, -4)
         grip.Size = UDim2.fromOffset(30, 30)
         grip.ZIndex = 65
-        shapes.rotatedSquare(grip, 16, P.Moss, P.Bark)
+        local gripLeaf = shapes.rotatedSquare(grip, 16, P.Moss, P.Bark)
+        bind(grip.MouseEnter, function()
+            TweenService:Create(gripLeaf, TweenInfo.new(0.14), { BackgroundColor3 = P.LeafLight }):Play()
+        end)
+        bind(grip.MouseLeave, function()
+            TweenService:Create(gripLeaf, TweenInfo.new(0.2), { BackgroundColor3 = P.Moss }):Play()
+        end)
         prim.tip(grip, "Drag to resize the window.")
         local resizing, resizeStart, resizeSize
         grip.InputBegan:Connect(function(input)
@@ -241,6 +331,11 @@ return function(context)
                 input.UserInputType == Enum.UserInputType.MouseButton1
                 or input.UserInputType == Enum.UserInputType.Touch
             then
+                if minimized or maximized then
+                    minimized = false
+                    maximized = false
+                    body.Visible = true
+                end
                 resizing = true
                 resizeStart = input.Position
                 resizeSize = Vector2.new(width, height)
@@ -256,16 +351,17 @@ return function(context)
             then
                 local delta = input.Position - resizeStart
                 local scale = uiScale.Scale > 0 and uiScale.Scale or 1
-                width = math.clamp(
-                    math.floor(resizeSize.X + delta.X / scale),
+                local screenSize = viewport()
+                local maxWidth = math.max(
                     theme.window.minWidth,
-                    math.min(theme.window.maxWidth, math.max(theme.window.minWidth, viewport().X - 24))
+                    math.min(theme.window.maxWidth, math.floor(screenSize.X / scale - 20))
                 )
-                height = math.clamp(
-                    math.floor(resizeSize.Y + delta.Y / scale),
+                local maxHeight = math.max(
                     theme.window.minHeight,
-                    math.min(theme.window.maxHeight, math.max(theme.window.minHeight, viewport().Y - 24))
+                    math.min(theme.window.maxHeight, math.floor(screenSize.Y / scale - 20))
                 )
+                width = math.clamp(math.floor(resizeSize.X + delta.X / scale), theme.window.minWidth, maxWidth)
+                height = math.clamp(math.floor(resizeSize.Y + delta.Y / scale), theme.window.minHeight, maxHeight)
                 applySize()
             end
         end)
@@ -281,27 +377,30 @@ return function(context)
             end
         end)
 
-        -- drag by the branch
+        -- drag by the branch: target + exponential follow, only on the top window
+        local dragging = false
         bind(header.InputBegan, function(input)
             if
                 input.UserInputType == Enum.UserInputType.MouseButton1
                 or input.UserInputType == Enum.UserInputType.Touch
             then
-                dragOffset = Vector2.new(input.Position.X, input.Position.Y) - holder.AbsolutePosition
+                if context.pressOnTop and not context.pressOnTop(holder, input) then
+                    return
+                end
+                dragging = true
+                local origin = Vector2.new(holder.Position.X.Offset, holder.Position.Y.Offset)
+                dragOffset = Vector2.new(input.Position.X, input.Position.Y) - origin
             end
         end)
         bind(userInputService.InputChanged, function(input)
             if
-                dragOffset
+                dragging
                 and (
                     input.UserInputType == Enum.UserInputType.MouseMovement
                     or input.UserInputType == Enum.UserInputType.Touch
                 )
             then
-                holder.Position = UDim2.fromOffset(
-                    math.floor(input.Position.X - dragOffset.X),
-                    math.floor(input.Position.Y - dragOffset.Y)
-                )
+                dragTarget = Vector2.new(input.Position.X, input.Position.Y) - dragOffset
             end
         end)
         bind(userInputService.InputEnded, function(input)
@@ -309,10 +408,21 @@ return function(context)
                 input.UserInputType == Enum.UserInputType.MouseButton1
                 or input.UserInputType == Enum.UserInputType.Touch
             then
-                if dragOffset then
+                if dragging then
+                    dragging = false
                     basePosition = holder.Position
                     dragOffset = nil
                 end
+            end
+        end)
+        bind(runService.RenderStepped, function(dt)
+            local delta = dragTarget - dragCurrent
+            if delta.Magnitude > 0.35 then
+                dragCurrent += delta * (1 - math.exp(-dt * 13))
+                holder.Position = UDim2.fromOffset(math.floor(dragCurrent.X + 0.5), math.floor(dragCurrent.Y + 0.5))
+            elseif delta.Magnitude > 0 then
+                dragCurrent = dragTarget
+                holder.Position = UDim2.fromOffset(math.floor(dragCurrent.X + 0.5), math.floor(dragCurrent.Y + 0.5))
             end
         end)
 
@@ -433,6 +543,133 @@ return function(context)
 
         local tabs = {}
         local activeTab
+        local finished = false
+        local revealTweens = setmetatable({}, { __mode = "k" })
+
+        local function orderedChildren(parent)
+            local items = {}
+            for index, child in ipairs(parent:GetChildren()) do
+                if child:IsA("GuiObject") and child.Visible then
+                    items[#items + 1] = { child = child, index = index }
+                end
+            end
+            table.sort(items, function(a, b)
+                if a.child.LayoutOrder ~= b.child.LayoutOrder then
+                    return a.child.LayoutOrder < b.child.LayoutOrder
+                end
+                return a.index < b.index
+            end)
+            local out = {}
+            for index, item in ipairs(items) do
+                out[index] = item.child
+            end
+            return out
+        end
+
+        local function fadeSelf(pageBody, object, delay)
+            if object:IsA("GuiObject") and not object.Visible then
+                return
+            end
+            local goals = {}
+            if object:IsA("GuiObject") then
+                if object.BackgroundTransparency < 0.999 then
+                    goals.BackgroundTransparency = object.BackgroundTransparency
+                end
+                if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+                    if object.TextTransparency < 0.999 then
+                        goals.TextTransparency = object.TextTransparency
+                    end
+                elseif object:IsA("ImageLabel") or object:IsA("ImageButton") then
+                    if object.ImageTransparency < 0.999 then
+                        goals.ImageTransparency = object.ImageTransparency
+                    end
+                end
+            elseif object:IsA("UIStroke") then
+                if object.Transparency < 0.999 then
+                    goals.Transparency = object.Transparency
+                end
+            end
+            if next(goals) == nil then
+                return
+            end
+            for prop in pairs(goals) do
+                object[prop] = 1
+            end
+            local tween = TweenService:Create(
+                object,
+                TweenInfo.new(0.42, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out, 0, false, delay),
+                goals
+            )
+            tween:Play()
+            revealTweens[pageBody][#revealTweens[pageBody] + 1] = tween
+        end
+
+        local function fadeTree(pageBody, object, delay)
+            fadeSelf(pageBody, object, delay)
+            for _, child in ipairs(object:GetDescendants()) do
+                fadeSelf(pageBody, child, delay)
+            end
+        end
+
+        local function settlePadding(pageBody, object, delay)
+            if not object:IsA("GuiObject") or object.AutomaticSize ~= Enum.AutomaticSize.None then
+                return
+            end
+            local padding = object:FindFirstChildOfClass("UIPadding")
+            if not padding then
+                padding = Instance.new("UIPadding")
+                padding.Parent = object
+            end
+            if padding:GetAttribute("hlT") == nil then
+                padding:SetAttribute("hlT", padding.PaddingTop.Offset)
+            end
+            local base = padding:GetAttribute("hlT")
+            padding.PaddingTop = UDim.new(0, base + 8)
+            local tween = TweenService:Create(
+                padding,
+                TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, 0, false, delay),
+                { PaddingTop = UDim.new(0, base) }
+            )
+            tween:Play()
+            revealTweens[pageBody][#revealTweens[pageBody] + 1] = tween
+        end
+
+        local function revealPage(page)
+            if not page or not page.body then
+                return
+            end
+            for _, tween in ipairs(revealTweens[page.body] or {}) do
+                pcall(function()
+                    tween:Cancel()
+                end)
+            end
+            revealTweens[page.body] = {}
+            local serial = 0
+            local function nextDelay()
+                local delay = math.min(serial, 18) * 0.045
+                serial += 1
+                return delay
+            end
+            for _, entry in ipairs(orderedChildren(page.body)) do
+                local section = shell.sections[entry]
+                if section then
+                    fadeTree(page.body, section.head, nextDelay())
+                    if section.content.Visible then
+                        fadeSelf(page.body, section.content, math.max(0, serial - 1) * 0.045 + 0.04)
+                        for _, child in ipairs(orderedChildren(section.content)) do
+                            local delay = nextDelay()
+                            fadeTree(page.body, child, delay)
+                            settlePadding(page.body, child, delay)
+                        end
+                    end
+                else
+                    local delay = nextDelay()
+                    fadeTree(page.body, entry, delay)
+                    settlePadding(page.body, entry, delay)
+                end
+            end
+        end
+
         local function selectTab(id, instant)
             if activeTab == id then
                 return
@@ -449,14 +686,28 @@ return function(context)
                 pageTitle.Text = tab.name
                 pageDesc.Text = tab.desc or ""
             end
-            if not instant then
+            if instant then
                 pageTitle.TextTransparency = 0
                 pageDesc.TextTransparency = 0.30
+            else
+                pageTitle.TextTransparency = 1
+                pageDesc.TextTransparency = 1
                 TweenService:Create(
                     pageTitle,
-                    TweenInfo.new(theme.motion.tab, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+                    TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
                     { TextTransparency = 0 }
                 ):Play()
+                TweenService:Create(
+                    pageDesc,
+                    TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, false, 0.05),
+                    { TextTransparency = 0.30 }
+                ):Play()
+                if finished then
+                    local page = shell.pages[id]
+                    if page and page.body.CanvasPosition.Y < 2 then
+                        revealPage(page)
+                    end
+                end
             end
         end
         shell.selectTab = selectTab
@@ -663,31 +914,6 @@ return function(context)
             target.MouseButton1Click:Connect(onClick)
             shell.pressable(target)
             return target
-        end
-
-        -- the old shell exported this; several page bodies call context.Shell.pressable
-        function shell.pressable(object)
-            if not object then
-                return
-            end
-            local scale = Instance.new("UIScale")
-            scale.Scale = 1
-            scale.Parent = object
-            if not object:IsA("GuiButton") then
-                return
-            end
-            local function release()
-                TweenService:Create(
-                    scale,
-                    TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-                    { Scale = 1 }
-                ):Play()
-            end
-            bind(object.MouseButton1Down, function()
-                TweenService:Create(scale, TweenInfo.new(0.08, Enum.EasingStyle.Quad), { Scale = 0.96 }):Play()
-            end)
-            bind(object.MouseButton1Up, release)
-            bind(object.MouseLeave, release)
         end
 
         ------------------------------------------------------------------ toast
@@ -1426,12 +1652,41 @@ return function(context)
         end)
 
         -------------------------------------------------------------- open/close
+        local fadeId, fadeShade, fadeSprout = 0, nil, nil
+        local function clearFade()
+            fadeId += 1
+            local shade, sprout = fadeShade, fadeSprout
+            fadeShade, fadeSprout = nil, nil
+            if sprout and sprout.Parent then
+                sprout:Destroy()
+            end
+            if shade then
+                if window.Parent == shade then
+                    window.Parent = holder
+                end
+                if shade.Parent then
+                    shade:Destroy()
+                end
+            end
+            fading = false
+        end
+
         local function fadeIn()
+            clearFade()
             fading = true
+            local token = fadeId
             holder.Visible = true
+            local shade = Instance.new("CanvasGroup")
+            shade.Name = "Fader"
+            shade.Size = UDim2.fromScale(1, 1)
+            shade.BackgroundTransparency = 1
+            shade.GroupTransparency = 1
+            shade.Parent = holder
+            window.Parent = shade
             local sprout = Instance.new("UIScale")
             sprout.Scale = 0.9
             sprout.Parent = window
+            fadeShade, fadeSprout = shade, sprout
             TweenService:Create(
                 holder,
                 TweenInfo.new(theme.motion.open, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
@@ -1442,20 +1697,32 @@ return function(context)
                 TweenInfo.new(theme.motion.open, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
                 { Scale = 1 }
             ):Play()
+            TweenService:Create(
+                shade,
+                TweenInfo.new(theme.motion.open, Enum.EasingStyle.Quad),
+                { GroupTransparency = 0 }
+            ):Play()
             task.delay(theme.motion.open, function()
+                if token ~= fadeId then
+                    return
+                end
+                window.Parent = holder
+                if shade.Parent then
+                    shade:Destroy()
+                end
                 if sprout.Parent then
                     sprout:Destroy()
                 end
+                fadeShade, fadeSprout = nil, nil
                 fading = false
             end)
             shapes.pauseFireflies(false)
         end
 
         local function fadeOut(onDone)
-            if fading then
-                return
-            end
+            clearFade()
             fading = true
+            local token = fadeId
             local shade = Instance.new("CanvasGroup")
             shade.Name = "Fader"
             shade.Size = UDim2.fromScale(1, 1)
@@ -1463,14 +1730,30 @@ return function(context)
             shade.GroupTransparency = 0
             shade.Parent = holder
             window.Parent = shade
+            local sprout = Instance.new("UIScale")
+            sprout.Scale = 1
+            sprout.Parent = window
+            fadeShade, fadeSprout = shade, sprout
             TweenService:Create(
                 shade,
                 TweenInfo.new(theme.motion.close, Enum.EasingStyle.Sine, Enum.EasingDirection.In),
                 { GroupTransparency = 1 }
             ):Play()
+            TweenService:Create(
+                sprout,
+                TweenInfo.new(theme.motion.close, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+                { Scale = 0.93 }
+            ):Play()
             task.delay(theme.motion.close, function()
+                if token ~= fadeId then
+                    return
+                end
                 window.Parent = holder
+                if sprout.Parent then
+                    sprout:Destroy()
+                end
                 shade:Destroy()
+                fadeShade, fadeSprout = nil, nil
                 holder.Visible = false
                 fading = false
                 if onDone then
@@ -1495,6 +1778,14 @@ return function(context)
                 if not activeTab then
                     selectTab(shell.order[1], true)
                 end
+                if finished and activeTab then
+                    local page = shell.pages[activeTab]
+                    if page and page.body.CanvasPosition.Y < 2 then
+                        task.defer(function()
+                            revealPage(page)
+                        end)
+                    end
+                end
             else
                 closeOverlay()
                 prim.hideTip()
@@ -1510,6 +1801,7 @@ return function(context)
         end
 
         function shell.finish()
+            finished = true
             if not activeTab then
                 selectTab(shell.order[1], true)
             end

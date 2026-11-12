@@ -623,14 +623,16 @@ return function(context)
         end
 
         for _, tab in ipairs(TABS) do
-            addPage(tab.id, tab.name, tab.desc)
+            local page = addPage(tab.id, tab.name, tab.desc)
+            -- the old shell locked built-in tab descriptions before pages existed
+            page.tab.descFixed = true
         end
 
         function shell.page(name, title, desc)
             local page = shell.pages[name]
             if not page then
                 page = addPage(name, title, desc)
-            elseif desc and desc ~= "" then
+            elseif desc and desc ~= "" and not page.tab.descFixed then
                 page.tab.desc = desc
             end
             return {
@@ -659,7 +661,33 @@ return function(context)
             target.Size = UDim2.fromOffset(52, 52)
             local diamond = shapes.rotatedSquare(target, 34, P.Moss, P.Bark)
             target.MouseButton1Click:Connect(onClick)
+            shell.pressable(target)
             return target
+        end
+
+        -- the old shell exported this; several page bodies call context.Shell.pressable
+        function shell.pressable(object)
+            if not object then
+                return
+            end
+            local scale = Instance.new("UIScale")
+            scale.Scale = 1
+            scale.Parent = object
+            if not object:IsA("GuiButton") then
+                return
+            end
+            local function release()
+                TweenService:Create(
+                    scale,
+                    TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                    { Scale = 1 }
+                ):Play()
+            end
+            bind(object.MouseButton1Down, function()
+                TweenService:Create(scale, TweenInfo.new(0.08, Enum.EasingStyle.Quad), { Scale = 0.96 }):Play()
+            end)
+            bind(object.MouseButton1Up, release)
+            bind(object.MouseLeave, release)
         end
 
         ------------------------------------------------------------------ toast
@@ -835,7 +863,14 @@ return function(context)
             local record = { slot = slot, group = group, sticky = options.sticky == true }
             live[#live + 1] = record
             while #live > 5 do
-                dismiss(live[1])
+                local victim = live[1]
+                for _, entry in ipairs(live) do
+                    if not entry.sticky then
+                        victim = entry
+                        break
+                    end
+                end
+                dismiss(victim)
             end
             hit.MouseButton1Click:Connect(function()
                 dismiss(record)
@@ -852,9 +887,18 @@ return function(context)
                 dismiss(record)
             end
             if options.button then
-                local action = kitButton(group, tostring(options.button.text or "OK"), options.button.onClick)
+                local action = kitButton(group, tostring(options.button.text or "OK"), nil)
                 action.Position = UDim2.fromOffset(14, 60)
                 action.Size = UDim2.fromOffset(104, 26)
+                action.MouseButton1Click:Connect(function()
+                    if record.gone or record.busy then
+                        return
+                    end
+                    record.busy = true
+                    if type(options.button.onClick) == "function" then
+                        pcall(options.button.onClick, record)
+                    end
+                end)
                 record.button = action
             end
             TweenService:Create(slot, TweenInfo.new(0.22, Enum.EasingStyle.Quad), { Size = UDim2.fromOffset(300, cardHeight) })

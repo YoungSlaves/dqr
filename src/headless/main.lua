@@ -382,7 +382,10 @@ return function(Context)
                 return
             end
             local Delta = Input.Position - StartInput
-            if Delta.Magnitude > 3 then
+            if not Moved then
+                if Delta.Magnitude <= 8 then
+                    return
+                end
                 Moved = true
                 RT.SuppressToggleUntil = os.clock() + 0.5
             end
@@ -463,7 +466,7 @@ return function(Context)
         end
         Global.SwangyManualOff = not Enabled
         if PowerButton and PowerButton.Parent then
-            PowerButton.Text = Enabled and "POWER ON" or "POWER OFF"
+            PowerButton.Text = Enabled and "ON" or "OFF"
             PowerButton.BackgroundColor3 = Enabled and Color3.fromRGB(27, 63, 53)
                 or Color3.fromRGB(31, 33, 39)
             PowerButton.TextColor3 = Enabled and Color3.fromRGB(145, 235, 195)
@@ -479,7 +482,7 @@ return function(Context)
             return
         end
         local Enabled = CFG.performanceMode ~= false
-        PerfButton.Text = Enabled and "PERF ON" or "PERF OFF"
+        PerfButton.Text = "PERFORMANCE"
         PerfButton.BackgroundColor3 = Enabled and Color3.fromRGB(48, 39, 63)
             or Color3.fromRGB(31, 33, 39)
         PerfButton.TextColor3 = Enabled and Color3.fromRGB(207, 177, 255)
@@ -530,7 +533,7 @@ return function(Context)
             return
         end
         local Enabled = RT.BlackScreen == true
-        BlackButton.Text = Enabled and "BLACK ON" or "BLACK OFF"
+        BlackButton.Text = "GPU RENDERING"
         BlackButton.BackgroundColor3 = Enabled and Color3.fromRGB(47, 38, 48)
             or Color3.fromRGB(31, 33, 39)
         BlackButton.TextColor3 = Enabled and Color3.fromRGB(247, 202, 215)
@@ -592,7 +595,7 @@ return function(Context)
             Rail.AnchorPoint = Vector2.new(0, 0)
             Rail.Position = UDim2.fromOffset(SavedPosition.X, SavedPosition.Y)
         end
-        Rail.Size = UDim2.fromOffset(328, 34)
+        Rail.Size = UDim2.fromOffset(390, 34)
         Rail.BackgroundColor3 = Color3.fromRGB(16, 17, 22)
         Rail.BackgroundTransparency = 0.08
         Rail.BorderSizePixel = 0
@@ -645,9 +648,17 @@ return function(Context)
             return Button
         end
 
-        PowerButton = NewButton("Power", "POWER", 78, 1)
-        PerfButton = NewButton("Performance", "PERF", 70, 2)
-        BlackButton = NewButton("Black", "BLACK", 72, 3)
+        local Grip = NewButton("Grip", "⋮", 12, 0)
+        Grip.BackgroundTransparency = 1
+        Grip.TextColor3 = Color3.fromRGB(118, 124, 138)
+        Grip.TextSize = 14
+        local GripStroke = Grip:FindFirstChildOfClass("UIStroke")
+        if GripStroke then
+            GripStroke.Transparency = 1
+        end
+        PowerButton = NewButton("Power", "ON", 56, 1)
+        PerfButton = NewButton("Performance", "PERFORMANCE", 104, 2)
+        BlackButton = NewButton("GPU", "GPU RENDERING", 104, 3)
         ResetButton = NewButton("ResetStats", "RESET STATS", 88, 4)
         ResetButton.TextColor3 = Color3.fromRGB(238, 155, 170)
         ToggleButton = PowerButton
@@ -681,9 +692,9 @@ return function(Context)
         end)
 
         Context.toggleDragConnections = {}
-        AddDrag(PowerButton, Rail, "ControlPosition", Context.toggleDragConnections)
+        AddDrag(Grip, Rail, "ControlPosition", Context.toggleDragConnections)
         SetPerformance(CFG.performanceMode ~= false, false)
-        PowerButton.Text = Context.headlessEnabled and "POWER ON" or "POWER OFF"
+        PowerButton.Text = Context.headlessEnabled and "ON" or "OFF"
         PowerButton.BackgroundColor3 = Context.headlessEnabled and Color3.fromRGB(27, 63, 53)
             or Color3.fromRGB(31, 33, 39)
         PowerButton.TextColor3 = Context.headlessEnabled and Color3.fromRGB(145, 235, 195)

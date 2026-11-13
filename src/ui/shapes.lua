@@ -67,6 +67,9 @@ return function(context)
         gui.DisplayOrder = spec.order
         gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         gui.IgnoreGuiInset = true
+        pcall(function()
+            gui.ScreenInsets = Enum.ScreenInsets.None
+        end)
         gui.ResetOnSpawn = false
         gui.Parent = parentForGui()
         guis[layer] = gui

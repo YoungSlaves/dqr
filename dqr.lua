@@ -269,6 +269,9 @@ local function buildCard(total)
     cardGui.DisplayOrder = 50
     cardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     cardGui.IgnoreGuiInset = true
+    pcall(function()
+        cardGui.ScreenInsets = Enum.ScreenInsets.None
+    end)
     cardGui.ResetOnSpawn = false
     cardGui.Parent = guiHost()
 

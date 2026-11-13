@@ -23,28 +23,22 @@ return function(Context)
 
     local function CurrentWalkSpeed()
         local Humanoid = CurrentHumanoid()
-        local Speed = Humanoid and tonumber(Humanoid.WalkSpeed)
-        return if Speed and Speed > 0 then Speed else nil
+        return (Humanoid and tonumber(Humanoid.WalkSpeed)) or 0
     end
 
+    -- The script must not lock or overwrite WalkSpeed. These stubs keep the
+    -- movement modules from taking speed control, while leaving the value the
+    -- game or the player set exactly as it is.
     local function DisableWalkSpeedControl()
-        local Baseline = CurrentWalkSpeed() or tonumber(CFG.tweenWalk) or 16
-        RT.WalkSpeedBaseline = Baseline
-        CFG.tweenWalk = Baseline
-        CFG.speedCustom = false
         Context.speedHoldTick = function() end
         Context.speedApply = function() end
         Context.speedCustomOn = function()
             return false
         end
-        Context.speedNormal = function()
-            return CurrentWalkSpeed() or Baseline
-        end
-        Context.speedBurst = function()
-            return CurrentWalkSpeed() or Baseline
-        end
+        Context.speedNormal = CurrentWalkSpeed
+        Context.speedBurst = CurrentWalkSpeed
         Context.walkNormal = function(Humanoid)
-            return (Humanoid and Humanoid.WalkSpeed) or CurrentWalkSpeed() or Baseline
+            return (Humanoid and Humanoid.WalkSpeed) or CurrentWalkSpeed()
         end
         Context.buffHoldsSpeed = function()
             return false
@@ -65,9 +59,6 @@ return function(Context)
             Context.LC.speed = function()
                 return nil
             end
-            if type(Context.LC.CONFIG) == "table" then
-                Context.LC.CONFIG.FallbackSpeed = Baseline
-            end
         end
         if Context.MV then
             Context.MV.walkSpeed = nil
@@ -75,43 +66,6 @@ return function(Context)
         end
     end
     DisableWalkSpeedControl()
-
-    local function InstallWalkSpeedGuard(Humanoid)
-        if not Humanoid or RT.destroyed then
-            return
-        end
-        RT.WalkSpeedConnections = RT.WalkSpeedConnections or {}
-        RT.WalkSpeedHumanoid = Humanoid
-        RT.WalkSpeedConnections[#RT.WalkSpeedConnections + 1] = Humanoid.Changed:Connect(function(Property)
-            if Property ~= "WalkSpeed" or RT.destroyed then
-                return
-            end
-            local Baseline = tonumber(RT.WalkSpeedBaseline)
-            if
-                Baseline
-                and Baseline > 0
-                and Humanoid.Parent ~= nil
-                and Humanoid.Health > 0
-                and math.abs(Humanoid.WalkSpeed - Baseline) > 0.01
-            then
-                Humanoid.WalkSpeed = Baseline
-            end
-        end)
-    end
-
-    InstallWalkSpeedGuard(CurrentHumanoid())
-    local CharacterAddedConnection
-    local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
-    if Player then
-        CharacterAddedConnection = Player.CharacterAdded:Connect(function(Character)
-            local Humanoid = Character:WaitForChild("Humanoid", 10)
-            if Humanoid then
-                InstallWalkSpeedGuard(Humanoid)
-            end
-        end)
-        RT.WalkSpeedConnections = RT.WalkSpeedConnections or {}
-        RT.WalkSpeedConnections[#RT.WalkSpeedConnections + 1] = CharacterAddedConnection
-    end
 
     local Resume = {
         autoQueue = Automation.AutoQueue ~= false,
@@ -1813,12 +1767,6 @@ return function(Context)
             for _, DeathConnection in ipairs(RT.Stats.DeathConnections) do
                 pcall(DeathConnection.Disconnect, DeathConnection)
             end
-        end
-        if RT.WalkSpeedConnections then
-            for _, SpeedConnection in ipairs(RT.WalkSpeedConnections) do
-                pcall(SpeedConnection.Disconnect, SpeedConnection)
-            end
-            RT.WalkSpeedConnections = nil
         end
         if HudGui then
             pcall(HudGui.Destroy, HudGui)

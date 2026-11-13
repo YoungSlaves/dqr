@@ -363,8 +363,8 @@ return function(Context)
             RT.SuppressToggleUntil = os.clock() + 0.5
             Context.SWANGY.Automation = Context.SWANGY.Automation or {}
             Context.SWANGY.Automation.ButtonPosition = {
-                X = ToggleButton.AbsolutePosition.X,
-                Y = ToggleButton.AbsolutePosition.Y,
+                X = ToggleButton.Position.X.Offset,
+                Y = ToggleButton.Position.Y.Offset,
             }
             if Context.saveSwangyConfig then
                 pcall(Context.saveSwangyConfig)

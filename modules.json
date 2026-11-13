@@ -6,6 +6,7 @@
     { "name": "services", "path": "src/core/services.lua" },
     { "name": "net", "path": "src/core/net.lua" },
     { "name": "coreSettings", "path": "src/features/coreSettings.lua" },
+    { "name": "headlessConfig", "path": "src/headless/config.lua" },
     { "name": "attackCatalog", "path": "src/features/attackCatalog.lua" },
     { "name": "gearProfiles", "path": "src/features/gearProfiles.lua" },
     { "name": "movementBoost", "path": "src/features/movementBoost.lua" },
@@ -19,14 +20,10 @@
     { "name": "partyQueue", "path": "src/features/partyQueue.lua" },
     { "name": "raidAutomation", "path": "src/features/raidAutomation.lua" },
     { "name": "uiTheme", "path": "src/ui/theme.lua" },
-    { "name": "uiShapes", "path": "src/ui/shapes.lua" },
-    { "name": "uiPrimitives", "path": "src/ui/primitives.lua" },
-    { "name": "uiKit", "path": "src/ui/kit.lua" },
-    { "name": "uiWindow", "path": "src/ui/window.lua" },
     { "name": "drawStyle", "path": "src/draw/style.lua" },
     { "name": "drawing", "path": "src/features/drawing.lua" },
     { "name": "walls", "path": "src/features/walls.lua" },
     { "name": "statisticsWebhooks", "path": "src/features/statisticsWebhooks.lua" },
-    { "name": "interfaceMainLoop", "path": "src/features/interfaceMainLoop.lua" }
+    { "name": "headlessMain", "path": "src/headless/main.lua" }
   ]
 }

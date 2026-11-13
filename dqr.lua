@@ -1,7 +1,8 @@
--- DQR loader -- one short bootstrap: loading card, manifest, cache, gate.
+-- DQR loader -- one short headless bootstrap: manifest, cache, load, start.
 -- No build step, no bundler. Only network peers: raw.githubusercontent.com for
 -- these modules, and the exact webhook URL the user typed (inside the build).
 local LOADER_VERSION = 2
+local HEADLESS = true -- no loader card or menu; only the world-space drawing stays
 local OWNER, REPO, BRANCH = "YoungSlaves", "dqr", "main"
 local BASE = ("https://raw.githubusercontent.com/%s/%s/%s/"):format(OWNER, REPO, BRANCH)
 local MANIFEST_URL = BASE .. "modules.json"
@@ -254,6 +255,9 @@ local function setProgress(value)
 end
 
 local function buildCard(total)
+    if HEADLESS then
+        return
+    end
     cardGui = Instance.new("ScreenGui")
     cardGui.Name = "DQRLoading"
     cardGui.DisplayOrder = 50
@@ -741,6 +745,9 @@ local function main()
         end
         if not ok then
             pcall(function()
+                if context.headlessStop then
+                    context.headlessStop()
+                end
                 if context.UI and context.UI.teardown then
                     context.UI.teardown()
                 end
@@ -760,6 +767,9 @@ local function main()
             pcall(previousDestruct)
         end
         pcall(function()
+            if context.headlessStop then
+                context.headlessStop()
+            end
             if context.UI and context.UI.teardown then
                 context.UI.teardown()
             end

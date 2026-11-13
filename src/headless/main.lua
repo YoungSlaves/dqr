@@ -523,6 +523,7 @@ return function(Context)
             SpoofFakes[Object] = Clone
             Fake = Clone
         end
+        Fake.Visible = true
         if Fake.Text ~= Text then
             Fake.Text = Text
         end

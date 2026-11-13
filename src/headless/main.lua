@@ -76,6 +76,43 @@ return function(Context)
     end
     DisableWalkSpeedControl()
 
+    local function InstallWalkSpeedGuard(Humanoid)
+        if not Humanoid or RT.destroyed then
+            return
+        end
+        RT.WalkSpeedConnections = RT.WalkSpeedConnections or {}
+        RT.WalkSpeedHumanoid = Humanoid
+        RT.WalkSpeedConnections[#RT.WalkSpeedConnections + 1] = Humanoid.Changed:Connect(function(Property)
+            if Property ~= "WalkSpeed" or RT.destroyed then
+                return
+            end
+            local Baseline = tonumber(RT.WalkSpeedBaseline)
+            if
+                Baseline
+                and Baseline > 0
+                and Humanoid.Parent ~= nil
+                and Humanoid.Health > 0
+                and math.abs(Humanoid.WalkSpeed - Baseline) > 0.01
+            then
+                Humanoid.WalkSpeed = Baseline
+            end
+        end)
+    end
+
+    InstallWalkSpeedGuard(CurrentHumanoid())
+    local CharacterAddedConnection
+    local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
+    if Player then
+        CharacterAddedConnection = Player.CharacterAdded:Connect(function(Character)
+            local Humanoid = Character:WaitForChild("Humanoid", 10)
+            if Humanoid then
+                InstallWalkSpeedGuard(Humanoid)
+            end
+        end)
+        RT.WalkSpeedConnections = RT.WalkSpeedConnections or {}
+        RT.WalkSpeedConnections[#RT.WalkSpeedConnections + 1] = CharacterAddedConnection
+    end
+
     local Resume = {
         autoQueue = Automation.AutoQueue ~= false,
         autoQueueReplay = Automation.AutoQueueReplay ~= false,
@@ -639,6 +676,12 @@ return function(Context)
             for _, DeathConnection in ipairs(RT.Stats.DeathConnections) do
                 pcall(DeathConnection.Disconnect, DeathConnection)
             end
+        end
+        if RT.WalkSpeedConnections then
+            for _, SpeedConnection in ipairs(RT.WalkSpeedConnections) do
+                pcall(SpeedConnection.Disconnect, SpeedConnection)
+            end
+            RT.WalkSpeedConnections = nil
         end
         if HudGui then
             pcall(HudGui.Destroy, HudGui)

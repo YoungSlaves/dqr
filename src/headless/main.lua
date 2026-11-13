@@ -279,7 +279,7 @@ return function(Context)
         ToggleGui = Instance.new("ScreenGui")
         ToggleGui.Name = "SwangyToggle"
         ToggleGui.ResetOnSpawn = false
-        ToggleGui.IgnoreGuiInset = true
+        ToggleGui.IgnoreGuiInset = false
         ToggleGui.DisplayOrder = 500
         ToggleGui.Parent = PlayerGui
 
@@ -393,7 +393,7 @@ return function(Context)
         HudGui = Instance.new("ScreenGui")
         HudGui.Name = "SwangyHUD"
         HudGui.ResetOnSpawn = false
-        HudGui.IgnoreGuiInset = true
+        HudGui.IgnoreGuiInset = false
         HudGui.DisplayOrder = 499
         HudGui.Parent = PlayerGui
 

@@ -656,6 +656,27 @@ return function(Context)
             SetSpoof(Portrait, "ImageColor3", Image and Color3.new(1, 1, 1) or nil)
             SetSpoof(Portrait, "ScaleType", Image and Enum.ScaleType.Crop or nil)
         end
+
+        -- The world-space nameplate is separate from the HUD playerStatus
+        -- frame, so spoof it as well. VIP/title are hidden while spoofing to
+        -- avoid showing the real identity beside the fake nameplate.
+        local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
+        local Character = Player and Player.Character
+        local Plate = Character and Character:FindFirstChild("playerNameplate")
+        local PlateFrame = Plate and Plate:FindFirstChild("Frame")
+        if PlateFrame then
+            SpoofText(PlateFrame:FindFirstChild("name"), SpoofValue(Data.Name))
+            local HealthBackground = PlateFrame:FindFirstChild("healthBackground")
+            SpoofText(
+                HealthBackground and HealthBackground:FindFirstChild("healthAmount"),
+                SpoofValue(Data.Health)
+            )
+            local PlateInner = PlateFrame:FindFirstChild("Frame")
+            local FrameInner = PlateInner and PlateInner:FindFirstChild("frameInner")
+            SpoofText(FrameInner and FrameInner:FindFirstChild("level"), SpoofValue(Data.Level))
+            SetSpoof(PlateFrame:FindFirstChild("title"), "Visible", false)
+            SetSpoof(PlateInner and PlateInner:FindFirstChild("vip"), "Visible", false)
+        end
     end
 
     local function UpdateSpoofButton()

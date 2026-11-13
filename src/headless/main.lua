@@ -342,6 +342,7 @@ return function(Context)
             local Delta = Input.Position - StartInput
             if Delta.Magnitude > 3 then
                 Moved = true
+                RT.SuppressToggleUntil = os.clock() + 0.5
             end
             local Camera = workspace.CurrentCamera
             local Viewport = Camera and Camera.ViewportSize or Vector2.new(1920, 1080)

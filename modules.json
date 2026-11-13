@@ -1,7 +1,7 @@
 {
   "version": "2.0.1",
   "minLoader": 2,
-  "basePath": "https://raw.githubusercontent.com/YoungSlaves/dqr/main/",
+  "basePath": "https://raw.githubusercontent.com/YoungSlaves/dqr/refs/heads/main/",
   "modules": [
     { "name": "services", "path": "src/core/services.lua" },
     { "name": "net", "path": "src/core/net.lua" },

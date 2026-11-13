@@ -360,6 +360,8 @@ return function(Context)
     local BlackGui, SpoofGui, SpoofPanel, SpoofToggle
     local SpoofFields = {}
     local SpoofOriginals = {}
+    local SpoofFakes = {}
+    local SpoofAssets = {}
 
     local function SaveAutomation()
         if Context.saveSwangyConfig then
@@ -444,6 +446,12 @@ return function(Context)
             end
         end
         SpoofOriginals = {}
+        for _, Fake in pairs(SpoofFakes) do
+            if Fake and Fake.Parent then
+                pcall(Fake.Destroy, Fake)
+            end
+        end
+        SpoofFakes = {}
     end
 
     local function SetSpoof(Object, Property, Value)
@@ -471,14 +479,135 @@ return function(Context)
         end
     end
 
-    local function SpoofPortrait(Value)
-        if type(Value) ~= "string" or Value == "" then
+    local function SpoofText(Object, Text)
+        if not Object then
+            return
+        end
+        Text = tostring(Text or "")
+        local Fake = SpoofFakes[Object]
+        if Fake and not Fake.Parent then
+            Fake = nil
+            SpoofFakes[Object] = nil
+        end
+        if Text == "" then
+            if Fake then
+                Fake.Visible = false
+            end
+            SetSpoof(Object, "Visible", false)
+            return
+        end
+        SetSpoof(Object, "TextTransparency", 1)
+        SetSpoof(Object, "TextStrokeTransparency", 1)
+        if not Fake then
+            local Ok, Clone = pcall(Object.Clone, Object)
+            if not Ok or not Clone then
+                return
+            end
+            for _, Child in ipairs(Clone:GetChildren()) do
+                if
+                    not Child:IsA("UIStroke")
+                    and not Child:IsA("UICorner")
+                    and not Child:IsA("UIGradient")
+                    and not Child:IsA("UITextSizeConstraint")
+                    and not Child:IsA("UIPadding")
+                then
+                    Child:Destroy()
+                end
+            end
+            Clone.Name = "streamerFake"
+            Clone.TextTransparency = 0
+            Clone.TextStrokeTransparency = Object.TextStrokeTransparency
+            Clone.Visible = true
+            Clone.ZIndex = Object.ZIndex + 1
+            Clone.Parent = Object.Parent
+            SpoofFakes[Object] = Clone
+            Fake = Clone
+        end
+        if Fake.Text ~= Text then
+            Fake.Text = Text
+        end
+    end
+
+    local function SpoofImage(Value)
+        if type(Value) ~= "string" then
             return nil
         end
-        if Value:match("^%d+$") then
-            return "rbxassetid://" .. Value
+        local Raw = Value:match("^%s*(.-)%s*$")
+        if Raw == "" then
+            return nil
         end
-        return Value
+        if Raw:match("^rbxassetid://") or Raw:match("^https?://") then
+            return Raw
+        end
+        if Raw:match("^%d+$") then
+            return "rbxassetid://" .. Raw
+        end
+        if type(isfile) ~= "function" or type(getcustomasset) ~= "function" then
+            return nil
+        end
+        local Images = (Context.PATH and Context.PATH.images)
+            or (Context.SWANGY_PATHS and Context.SWANGY_PATHS.Images)
+            or "swangy/images"
+        local CacheKey = Images .. "|" .. Raw
+        if SpoofAssets[CacheKey] then
+            return SpoofAssets[CacheKey]
+        end
+        local Candidates, Seen = {}, {}
+        local function Add(Path)
+            Path = tostring(Path):gsub("\\", "/")
+            if Path ~= "" and not Seen[Path] then
+                Seen[Path] = true
+                Candidates[#Candidates + 1] = Path
+            end
+        end
+        local Base = Raw:gsub("\\", "/")
+        local Prefix = Images .. "/"
+        if Base:sub(1, #Prefix):lower() == Prefix:lower() then
+            Add(Base)
+        elseif Base:sub(1, 7):lower() == "images/" then
+            Add(Images .. "/" .. Base:sub(8))
+        elseif Base:find("/", 1, true) then
+            Add(Base)
+        else
+            Add(Images .. "/" .. Base)
+        end
+        if not Base:match("%.([%w]+)$") then
+            local Count = #Candidates
+            for Index = 1, Count do
+                local Path = Candidates[Index]
+                Add(Path .. ".png")
+                Add(Path .. ".jpg")
+                Add(Path .. ".jpeg")
+                Add(Path .. ".webp")
+            end
+        end
+        for _, Path in ipairs(Candidates) do
+            local Exists = select(2, pcall(isfile, Path))
+            if Exists then
+                local Ok, Asset = pcall(getcustomasset, Path)
+                if Ok and Asset then
+                    SpoofAssets[CacheKey] = Asset
+                    return Asset
+                end
+            end
+        end
+        if type(listfiles) == "function" then
+            local Ok, Files = pcall(listfiles, Images)
+            if Ok and type(Files) == "table" then
+                local Wanted = Base:lower()
+                for _, File in ipairs(Files) do
+                    local Name = tostring(File):gsub("\\", "/"):match("([^/]+)$")
+                    if Name and Name:lower() == Wanted then
+                        local AssetOk, Asset = pcall(getcustomasset, File)
+                        if AssetOk and Asset then
+                            SpoofAssets[CacheKey] = Asset
+                            return Asset
+                        end
+                    end
+                end
+            end
+        end
+        return nil
     end
 
     local function ApplySpoof()
@@ -501,21 +630,19 @@ return function(Context)
             end
             return Object
         end
-        local function Display(Value)
-            return Value == nil and nil or tostring(Value)
-        end
-        SetSpoof(Find("playerName"), "Text", Display(Data.Name))
+        SpoofText(Find("playerName"), Data.Name)
+        SpoofText(Find("levelBorder", "level"), Data.Level)
+        SpoofText(Find("moneyMain", "TextLabel"), Data.Gold)
+        SpoofText(Find("moneyMain", "GemsText"), Data.Gems)
+        SpoofText(Find("xpFrame", "xp"), Data.EXP)
+        SpoofText(Find("healthFrame", "health"), Data.Health)
         local Portrait = Find("portraitBorder", "portrait")
-        local Image = SpoofPortrait(tostring(Data.PFP or ""))
+        local Image = SpoofImage(tostring(Data.PFP or ""))
         SetSpoof(Portrait, "Image", Image)
         if Portrait then
             SetSpoof(Portrait, "ImageColor3", Image and Color3.new(1, 1, 1) or nil)
+            SetSpoof(Portrait, "ScaleType", Image and Enum.ScaleType.Crop or nil)
         end
-        SetSpoof(Find("levelBorder", "level"), "Text", Display(Data.Level))
-        SetSpoof(Find("moneyMain", "TextLabel"), "Text", Display(Data.Gold))
-        SetSpoof(Find("moneyMain", "GemsText"), "Text", Display(Data.Gems))
-        SetSpoof(Find("xpFrame", "xp"), "Text", Display(Data.EXP))
-        SetSpoof(Find("healthFrame", "health"), "Text", Display(Data.Health))
     end
 
     local function UpdateSpoofButton()
@@ -602,7 +729,7 @@ return function(Context)
 
         local Rows = {
             { Key = "Name", Label = "NAME", Placeholder = "Display name" },
-            { Key = "PFP", Label = "PFP", Placeholder = "Image URL or asset id" },
+            { Key = "PFP", Label = "PFP", Placeholder = "filename in swangy/images" },
             { Key = "Level", Label = "LEVEL", Placeholder = "Level" },
             { Key = "Gold", Label = "GOLD", Placeholder = "Gold amount" },
             { Key = "Gems", Label = "GEMS", Placeholder = "Gem amount" },
@@ -1357,6 +1484,7 @@ return function(Context)
             SpoofPanel = nil
             SpoofToggle = nil
             SpoofFields = {}
+            SpoofAssets = {}
             Context.spoofGui = nil
         end
         if RunService and RunService.Set3dRenderingEnabled then

@@ -71,7 +71,7 @@ return function(Context)
             Spoofer = {
                 Enabled = false,
                 Name = "",
-                PFP = "",
+                PFP = "pfp.png",
                 Level = "",
                 Gold = "",
                 Gems = "",

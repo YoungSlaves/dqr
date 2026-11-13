@@ -63,6 +63,52 @@ return function(Context)
         Context.RAID.cfg.fixedTier = tonumber(CFG.bossRaidTier) or Context.RAID.cfg.fixedTier
     end
 
+    local function SpotTick(Now)
+        local DG = Context.DG
+        if not (DG and DG.origin and Context.dangerAt) then
+            return
+        end
+        if CFG.visuals == false or CFG.drawSpots == false then
+            return
+        end
+        if Now - (RT.spotAt or 0) < (tonumber(CFG.spotEvery) or 0.35) then
+            return
+        end
+        RT.spotAt = Now
+        local Boxes = DG.boxes
+        if type(Boxes) ~= "table" or #Boxes == 0 then
+            DG.cands = {}
+            return
+        end
+        local Origin = DG.origin
+        local Radius = math.max(tonumber(CFG.spotRadius) or 48, 16)
+        local Step = math.max(tonumber(CFG.spotStep) or 8, 4)
+        local FloorY = Origin.Y - 2.4
+        local MoveAt = tonumber(CFG.dodgeMoveAt) or 0.15
+        local Cands = {}
+        for OffsetX = -Radius, Radius, Step do
+            for OffsetZ = -Radius, Radius, Step do
+                local X, Z = Origin.X + OffsetX, Origin.Z + OffsetZ
+                local Danger = Context.dangerAt(X, FloorY, Z, 0)
+                local Soon = Context.dangerAt(X, FloorY, Z, 0.6)
+                Cands[#Cands + 1] = {
+                    x = X,
+                    y = FloorY,
+                    z = Z,
+                    ox = OffsetX,
+                    oz = OffsetZ,
+                    danger = Danger,
+                    endDanger = math.max(Danger, Soon),
+                    safe = Danger <= MoveAt,
+                    valid = true,
+                    blocked = false,
+                }
+            end
+        end
+        DG.cands = Cands
+    end
+    Context.spotTick = SpotTick
+
     local RunService = Context.RunService
     local LastTick = 0
     local Ticks = {
@@ -71,6 +117,7 @@ return function(Context)
         "judgeCasts",
         "buffTick",
         "brainTick",
+        "spotTick",
         "casterTick",
         "faceTick",
         "drawTick",

@@ -96,6 +96,9 @@ return function(Context)
             DrawWaypoints = true,
             Labels = false,
             MarkerScale = 1,
+            SpotRadius = 48,
+            SpotStep = 8,
+            SpotEvery = 0.35,
             SafeColor = "#3cdc78",
             SoonColor = "#ffdc28",
             DangerColor = "#ff3232",
@@ -376,6 +379,9 @@ return function(Context)
     Set("labelHazards", Visuals.Labels == true)
     Set("labelUnknown", Visuals.Labels == true)
     Set("markerScale", tonumber(Visuals.MarkerScale) or CFG.markerScale)
+    Set("spotRadius", tonumber(Visuals.SpotRadius) or CFG.spotRadius)
+    Set("spotStep", tonumber(Visuals.SpotStep) or CFG.spotStep)
+    Set("spotEvery", tonumber(Visuals.SpotEvery) or CFG.spotEvery)
     Set("hazardTransparency", tonumber(CustomMap.Transparency) or CFG.hazardTransparency)
     Set("mapAttackOneColor", type(CustomMap.Color) == "string")
     Set("mapAttackColor", Hex(CustomMap.Color, CFG.mapAttackColor))

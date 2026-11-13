@@ -565,6 +565,12 @@ return function(Context)
         if not PlayerGui then
             return
         end
+        if Context.toggleDragConnections then
+            for _, Connection in ipairs(Context.toggleDragConnections) do
+                pcall(Connection.Disconnect, Connection)
+            end
+            Context.toggleDragConnections = nil
+        end
         local Existing = PlayerGui:FindFirstChild("SwangyToggle")
         if Existing then
             Existing:Destroy()

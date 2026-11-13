@@ -176,6 +176,19 @@ return function(Context)
         if Context.LC and Context.LC.off then
             pcall(Context.LC.off)
         end
+        pcall(function()
+            local PlayerModule = Player and Player.PlayerScripts:FindFirstChild("PlayerModule")
+            if PlayerModule then
+                require(PlayerModule):GetControls():Enable()
+            else
+                local ControlModule = game:GetService("StarterPlayer"):FindFirstChild("PlayerModule")
+                    and game:GetService("StarterPlayer").PlayerModule:FindFirstChild("ControlModule")
+                if ControlModule and ControlModule.hlMoveFn then
+                    ControlModule.moveFunction = ControlModule.hlMoveFn
+                    ControlModule.hlMoveFn = nil
+                end
+            end
+        end)
         if Humanoid then
             if Context.restoreWalkSpeed then
                 pcall(Context.restoreWalkSpeed, Humanoid)
@@ -190,6 +203,8 @@ return function(Context)
         end
         if Context.MV then
             Context.MV.driving = false
+            Context.MV.controlsOff = false
+            Context.MV.controlsAt = 0
             Context.MV.cmdDir = nil
         end
     end

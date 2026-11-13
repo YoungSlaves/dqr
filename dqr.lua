@@ -584,7 +584,10 @@ local function main()
     if manifest then
         setStatus("downloading 0/" .. #manifest.modules)
         local total = #manifest.modules
-        local base = manifest.basePath or BASE
+        -- Do not trust a stale manifest's basePath: raw GitHub can serve an
+        -- older manifest for a branch while the source files are already new.
+        -- The loader's own BASE is the source of truth for this build.
+        local base = BASE
         local fetched = 0
         local failures = 0
         sources = {}

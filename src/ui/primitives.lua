@@ -121,23 +121,6 @@ return function(context)
     end
 
     ---------------------------------------------------------------- interaction
-    function prim.hoverStroke(target, strokeObject, fromAlpha, toAlpha)
-        target.MouseEnter:Connect(function()
-            TweenService:Create(
-                strokeObject,
-                TweenInfo.new(theme.motion.hover, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Transparency = toAlpha or 0.4 }
-            ):Play()
-        end)
-        target.MouseLeave:Connect(function()
-            TweenService:Create(
-                strokeObject,
-                TweenInfo.new(theme.motion.hover, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Transparency = fromAlpha or 1 }
-            ):Play()
-        end)
-    end
-
     function prim.pressable(button)
         if button:FindFirstChildOfClass("UIScale") then
             return

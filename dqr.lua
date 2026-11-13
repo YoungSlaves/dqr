@@ -11,6 +11,7 @@ local MAX_CACHED = 2
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 while not player do
     task.wait()
@@ -42,13 +43,6 @@ function fs.write(path, text)
         return false
     end
     return (pcall(writefile, path, text))
-end
-function fs.exists(path)
-    if type(isfile) == "function" then
-        local ok, value = pcall(isfile, path)
-        return ok and value == true
-    end
-    return fs.read(path) ~= nil
 end
 function fs.folder(path)
     if type(makefolder) == "function" then
@@ -256,7 +250,6 @@ local function setProgress(value)
     end
     value = math.clamp(value, progress, 1)
     progress = value
-    TweenService = TweenService or game:GetService("TweenService")
     TweenService:Create(progressFill, TweenInfo.new(0.12, Enum.EasingStyle.Quad), { Size = UDim2.fromScale(value, 1) }):Play()
 end
 
@@ -348,13 +341,11 @@ local function buildCard(total)
     pulse.Parent = sign
     round(pulse, 3)
     pulse.BackgroundTransparency = 0.4
-    game:GetService("TweenService")
-        :Create(
-            pulse,
-            TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-            { BackgroundTransparency = 1 }
-        )
-        :Play()
+    TweenService:Create(
+        pulse,
+        TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+        { BackgroundTransparency = 1 }
+    ):Play()
 
     statusLabel = text(card, "preparing", 11, C.parchment)
     statusLabel.Position = UDim2.fromOffset(12, 58)
@@ -468,29 +459,29 @@ local function readOrder()
     return order
 end
 
-local function validManifest(manifest)
-    if type(manifest) ~= "table" or type(manifest.version) ~= "string" then
+local function ValidManifest(Manifest)
+    if type(Manifest) ~= "table" or type(Manifest.version) ~= "string" then
         return false
     end
-    if manifest.basePath ~= nil and (type(manifest.basePath) ~= "string" or manifest.basePath == "") then
+    if Manifest.basePath ~= nil and (type(Manifest.basePath) ~= "string" or Manifest.basePath == "") then
         return false
     end
-    if type(manifest.modules) ~= "table" or #manifest.modules == 0 then
+    if type(Manifest.modules) ~= "table" or #Manifest.modules == 0 then
         return false
     end
-    local names = {}
-    for _, module in ipairs(manifest.modules) do
+    local Names = {}
+    for _, Module in ipairs(Manifest.modules) do
         if
-            type(module) ~= "table"
-            or type(module.name) ~= "string"
-            or module.name == ""
-            or type(module.path) ~= "string"
-            or module.path == ""
-            or names[module.name]
+            type(Module) ~= "table"
+            or type(Module.name) ~= "string"
+            or Module.name == ""
+            or type(Module.path) ~= "string"
+            or Module.path == ""
+            or Names[Module.name]
         then
             return false
         end
-        names[module.name] = true
+        Names[Module.name] = true
     end
     return true
 end
@@ -503,7 +494,7 @@ local function loadCache()
         local manifestText = fs.read(dir .. "modules.json")
         if manifestText then
             local ok, manifest = pcall(HttpService.JSONDecode, HttpService, manifestText)
-            if ok and validManifest(manifest) and manifest.version == version then
+            if ok and ValidManifest(manifest) and manifest.version == version then
                 local sources, complete = {}, true
                 for _, module in ipairs(manifest.modules) do
                     local source = fs.read(dir .. module.name .. ".lua")
@@ -563,7 +554,7 @@ local function main()
     buildCard(0)
     setStatus("preparing")
 
-    local manifest, sources, offline, cachedVersion
+    local manifest, sources, offline
     local manifestText
 
     setStatus("fetching manifest")
@@ -572,7 +563,7 @@ local function main()
         local body = fetch(url)
         if body then
             local ok, parsed = pcall(HttpService.JSONDecode, HttpService, body)
-            if ok and validManifest(parsed) then
+            if ok and ValidManifest(parsed) then
                 manifest, manifestText = parsed, body
                 break
             end
@@ -635,7 +626,6 @@ local function main()
         if ok and cachedManifest then
             manifest, sources, usedVersion = cachedManifest, cachedSources, cached
             offline = true
-            cachedVersion = cached
             if counterLabel then
                 counterLabel.Text = "offline · cached v" .. tostring(cached)
             end

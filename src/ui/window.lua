@@ -750,7 +750,7 @@ return function(context)
         end
 
         -- account line + status dot (8px inset)
-        local accountLine = prim.text(rail, {
+        prim.text(rail, {
             role = "footer",
             text = localPlayer and localPlayer.Name or "",
             position = UDim2.new(0, 12, 1, -44),
@@ -951,7 +951,7 @@ return function(context)
             target.AnchorPoint = Vector2.new(0, 0.5)
             target.Position = UDim2.new(0, 14, 0.35, 0)
             target.Size = UDim2.fromOffset(52, 52)
-            local diamond = shapes.rotatedSquare(target, 34, P.Moss, P.Bark)
+            shapes.rotatedSquare(target, 34, P.Moss, P.Bark)
             target.MouseButton1Click:Connect(onClick)
             shell.pressable(target)
             return target
@@ -1660,7 +1660,7 @@ return function(context)
                     zIndex = 53,
                 })
                 label.TextColor3 = index == 1 and P.LeafLight or P.Parchment
-                local tag = prim.text(option, {
+                prim.text(option, {
                     role = "captionSub",
                     text = entry.tab.name,
                     position = UDim2.new(1, -112, 0, 0),

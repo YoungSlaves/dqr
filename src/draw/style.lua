@@ -4,7 +4,6 @@
 return function(context)
     local theme = context.Theme
     local P = theme.palette
-    local TweenService = context.getService("TweenService")
 
     local style = {
         hazard = P.LeafLight,
@@ -73,26 +72,6 @@ return function(context)
         end
         apply()
         label:GetPropertyChangedSignal("Text"):Connect(apply)
-    end
-
-    function style.applyOutline(box, color, thickness)
-        if not box then
-            return box
-        end
-        box.LineThickness = thickness or 1.5
-        box.Color3 = color
-        box.SurfaceTransparency = 1
-        return box
-    end
-
-    function style.fade(object, duration, properties)
-        local tween = TweenService:Create(
-            object,
-            TweenInfo.new(duration or 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            properties
-        )
-        tween:Play()
-        return tween
     end
 
     context.drawStyle = style

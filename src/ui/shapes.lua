@@ -17,7 +17,6 @@ return function(context)
     local theme = context.Theme
     local P = theme.palette
     local TweenService = context.getService("TweenService")
-    local runService = context.RunService
 
     local shapes = {}
     local grainCount = 0
@@ -356,7 +355,7 @@ return function(context)
         sign.ZIndex = 2
         sign.Parent = holder
         corner(sign, theme.radius.sign)
-        local border = shapes.stroke(sign, P.Bark, 1)
+        shapes.stroke(sign, P.Bark, 1)
         local inner = shapes.stroke(sign, P.Fern, 1, 1)
         inner.Name = "Inner"
 
@@ -398,16 +397,6 @@ return function(context)
         corner(dot, 999)
 
         local state = { active = false }
-        local function setRope(_length)
-            -- The rail is flat now; tab changes animate the accent instead.
-        end
-        local function tint(color, transparency, goalColor, goalTransparency)
-            TweenService:Create(
-                sign,
-                TweenInfo.new(theme.motion.tab, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { BackgroundColor3 = goalColor, BackgroundTransparency = goalTransparency }
-            ):Play()
-        end
 
         local function setHover(hovering)
             if state.active then

@@ -194,7 +194,6 @@ return function(context)
     end
 
     theme.fonts = resolved
-    theme.fontCandidates = candidates
 
     if context.log then
         context.log(

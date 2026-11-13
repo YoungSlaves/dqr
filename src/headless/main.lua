@@ -611,8 +611,20 @@ return function(Context)
         return nil
     end
 
+    -- A value of "*" is a sentinel for a blank text field. The original label
+    -- is hidden as well, so a spoofed name never falls back to the real value.
+    local function SpoofValue(Value)
+        local Text = tostring(Value or "")
+        if Text:match("^%s*%*%s*$") then
+            return ""
+        end
+        return Text
+    end
+
     local function ApplySpoof()
         local Data = SpoofSettings()
+        -- Toggling the spoofer off disables every fake label and restores the
+        -- real local playerStatus values.
         if Data.Enabled ~= true then
             RestoreSpoof()
             return
@@ -631,12 +643,12 @@ return function(Context)
             end
             return Object
         end
-        SpoofText(Find("playerName"), Data.Name)
-        SpoofText(Find("levelBorder", "level"), Data.Level)
-        SpoofText(Find("moneyMain", "TextLabel"), Data.Gold)
-        SpoofText(Find("moneyMain", "GemsText"), Data.Gems)
-        SpoofText(Find("xpFrame", "xp"), Data.EXP)
-        SpoofText(Find("healthFrame", "health"), Data.Health)
+        SpoofText(Find("playerName"), SpoofValue(Data.Name))
+        SpoofText(Find("levelBorder", "level"), SpoofValue(Data.Level))
+        SpoofText(Find("moneyMain", "TextLabel"), SpoofValue(Data.Gold))
+        SpoofText(Find("moneyMain", "GemsText"), SpoofValue(Data.Gems))
+        SpoofText(Find("xpFrame", "xp"), SpoofValue(Data.EXP))
+        SpoofText(Find("healthFrame", "health"), SpoofValue(Data.Health))
         local Portrait = Find("portraitBorder", "portrait")
         local Image = SpoofImage(tostring(Data.PFP or ""))
         SetSpoof(Portrait, "Image", Image)

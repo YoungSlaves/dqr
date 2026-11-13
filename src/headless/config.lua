@@ -68,10 +68,12 @@ return function(Context)
                 Health = "",
                 Image = "logo.png",
             },
+            -- Text values use "*" to intentionally blank that display field.
+            -- PFP is a filename resolved from swangy/images.
             Spoofer = {
                 Enabled = false,
                 Name = "",
-                PFP = "pfp.png",
+                PFP = "bunnyoutofhole.jpg",
                 Level = "",
                 Gold = "",
                 Gems = "",

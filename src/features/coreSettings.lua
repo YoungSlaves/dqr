@@ -1582,64 +1582,10 @@ return function(context)
         end
         return nil
     end
-    local sharedValue8
-    local sharedValue9 = false
-    local function customLogo()
-        if sharedValue9 then
-            local value = sharedValue8
-            return value
-        end
-        sharedValue9 = true
-        if type(getcustomasset) ~= "function" then
-            return nil
-        elseif type(isfile) ~= "function" then
-            return nil
-        end
-        local value2 = {
-            paths.images .. "/logo.png",
-            paths.images .. "/logo.jpg",
-            paths.images .. "/logo.jpeg",
-            paths.images .. "/logo.webp",
-        }
-        if type(listfiles) == "function" then
-            local success2, value3 = pcall(listfiles, paths.images)
-            if success2 and type(value3) == "table" then
-                for index, entry in ipairs(value3) do
-                    index = string.lower(tostring(entry))
-                    if index:sub(-4) == ".png" then
-                        value2[#value2 + 1] = entry
-                    elseif index:sub(-4) == ".jpg" then
-                        value2[#value2 + 1] = entry
-                    elseif index:sub(-5) == ".jpeg" then
-                        value2[#value2 + 1] = entry
-                    elseif index:sub(-5) == ".webp" then
-                        value2[#value2 + 1] = entry
-                    end
-                end
-            end
-        end
-        for index2, entry2 in ipairs(value2) do
-            local success3, value4 = pcall(isfile, entry2)
-            if success3 then
-                if value4 then
-                    local success4, value5 = pcall(getcustomasset, entry2)
-                    if success4 then
-                        if value5 then
-                            sharedValue8 = value5
-                            index2 = sharedValue8
-                            return index2
-                        end
-                    end
-                end
-            end
-        end
-        return nil
-    end
     context.PATH = paths
     context.ensureFolders = ensureFolders
     context.pickFile = pickFile
     context.readJson = readJson
-    context.customLogo = customLogo
     context.BAKED_WAYPOINTS = {
         {
             group = { -635.7332, 23.7726, 362.8112 },
@@ -2675,7 +2621,6 @@ return function(context)
             end
         end
     end
-    context.UI = {}
     context.sliderConnections = {}
     context.bossProfile = bossProfile
     context.bobCrystal = bobCrystal

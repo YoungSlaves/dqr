@@ -76,6 +76,7 @@ return function(Context)
             AutoE = true,
             AutoQ = true,
             AutoStart = true,
+            StartDelay = 1,
             AutoQueue = true,
             AutoQueueReplay = true,
             AutoFarmByPlace = true,
@@ -318,6 +319,7 @@ return function(Context)
     Set("autoQueue", Auto.Enabled ~= false and Auto.AutoQueue ~= false)
     Set("autoQueueReplay", Auto.AutoQueueReplay ~= false)
     Set("autoStartDungeon", Auto.Enabled ~= false and Auto.AutoStart ~= false)
+    Set("autoStartDelay", tonumber(Auto.StartDelay) or CFG.autoStartDelay)
     Set("autoAttack", Auto.AutoAttack ~= false)
     Set("autoE", Auto.AutoE ~= false)
     Set("autoQ", Auto.AutoQ ~= false)

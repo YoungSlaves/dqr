@@ -5,6 +5,8 @@ return function(Context)
     local Settings = Context.SWANGY
     local Automation = Settings.Automation or {}
     Context.RT = RT
+    local Global = (type(getgenv) == "function" and getgenv()) or _G
+    local ManualOff = Global.SwangyManualOff == true
     RT.destroyed = false
     RT.modHalt = false
     RT.farmEnabled = Automation.Enabled ~= false
@@ -114,6 +116,7 @@ return function(Context)
     local Ticks = {
         "readerTick",
         "lobbyTick",
+        "autoStartTick",
         "judgeCasts",
         "buffTick",
         "brainTick",
@@ -132,8 +135,44 @@ return function(Context)
         Context.log("Headless", Name .. ": " .. tostring(ErrorMessage))
     end
 
+    local function AutoStartTick(Now)
+        if not CFG.autoStartDungeon or RT.destroyed or RT.modHalt then
+            return
+        end
+        local Workspace = Context.Workspace or game:GetService("Workspace")
+        local Name = Workspace:FindFirstChild("dungeonName")
+        local Started = Workspace:FindFirstChild("dungeonStarted")
+        if not (Name and tostring(Name.Value) ~= "" and Started and Started.Value == false) then
+            RT.autoStartKey, RT.autoStartAt = nil, nil
+            return
+        end
+        local Key = tostring(game.JobId) .. ":" .. tostring(game.PlaceId)
+        if RT.autoStartKey ~= Key then
+            RT.autoStartKey = Key
+            RT.autoStartAt = Now + (tonumber(CFG.autoStartDelay) or 1)
+        end
+        if Now < (RT.autoStartAt or 0) or Now - (RT.autoStartFired or 0) < 8 then
+            return
+        end
+        local Remotes = game:GetService("ReplicatedStorage"):FindFirstChild("remotes")
+        local Remote = Remotes
+            and (Remotes:FindFirstChild("changeStartValue") or Remotes:FindFirstChild("startDungeon"))
+        if not Remote then
+            return
+        end
+        RT.autoStartFired = Now
+        local Ok, ErrorMessage = pcall(Remote.FireServer, Remote)
+        if not Ok then
+            Report("autoStart", ErrorMessage)
+        end
+    end
+    Context.autoStartTick = AutoStartTick
+
     local ToggleButton, ToggleGui
     local function SetEnabled(Enabled, Save)
+        if Enabled and not Save and Global.SwangyManualOff == true then
+            Enabled = false
+        end
         Context.headlessEnabled = Enabled
         Context.SWANGY.Automation = Context.SWANGY.Automation or {}
         Context.SWANGY.Automation.Enabled = Enabled
@@ -175,6 +214,7 @@ return function(Context)
                 pcall(Context.clearDrawing)
             end
         end
+        Global.SwangyManualOff = not Enabled
         if ToggleButton and ToggleButton.Parent then
             ToggleButton.Text = Enabled and "SWANGY: ON" or "SWANGY: OFF"
             ToggleButton.BackgroundColor3 = Enabled and Color3.fromRGB(26, 118, 78) or Color3.fromRGB(118, 42, 48)
@@ -224,14 +264,20 @@ return function(Context)
         Stroke.Transparency = 0.35
         Stroke.Parent = ToggleButton
 
+        local ArmedAt, LastToggle = os.clock() + 0.35, 0
         ToggleButton.Activated:Connect(function()
+            local Now = os.clock()
+            if Now < ArmedAt or Now - LastToggle < 0.35 then
+                return
+            end
+            LastToggle = Now
             SetEnabled(not Context.headlessEnabled, true)
         end)
         Context.toggleGui = ToggleGui
         Context.toggleButton = ToggleButton
     end
 
-    SetEnabled(Automation.Enabled ~= false, false)
+    SetEnabled(not ManualOff and Automation.Enabled ~= false, false)
     BuildToggle()
 
     if Context.readerStart then

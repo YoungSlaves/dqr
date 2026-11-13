@@ -511,7 +511,7 @@ return function(Context)
         BlackGui.Name = "SwangyBlack"
         BlackGui.ResetOnSpawn = false
         BlackGui.IgnoreGuiInset = true
-        BlackGui.DisplayOrder = 400
+        BlackGui.DisplayOrder = 9000
         BlackGui.Enabled = RT.BlackScreen == true
         local Shade = Instance.new("Frame")
         Shade.Name = "Shade"
@@ -579,7 +579,7 @@ return function(Context)
         ToggleGui.Name = "SwangyToggle"
         ToggleGui.ResetOnSpawn = false
         ToggleGui.IgnoreGuiInset = false
-        ToggleGui.DisplayOrder = 550
+        ToggleGui.DisplayOrder = 9002
         ToggleGui.Parent = PlayerGui
 
         local Rail = Instance.new("Frame")
@@ -721,7 +721,7 @@ return function(Context)
         HudGui.Name = "SwangyHUD"
         HudGui.ResetOnSpawn = false
         HudGui.IgnoreGuiInset = false
-        HudGui.DisplayOrder = 540
+        HudGui.DisplayOrder = 9001
         HudGui.Parent = PlayerGui
 
         HudPanel = Instance.new("Frame")

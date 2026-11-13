@@ -299,6 +299,7 @@ return function(Context)
         ToggleButton.TextColor3 = Color3.fromRGB(234, 247, 255)
         ToggleButton.TextSize = 13
         ToggleButton.Font = Enum.Font.GothamBold
+        ToggleButton.Active = true
         ToggleButton.AutoButtonColor = true
         ToggleButton.Parent = ToggleGui
 

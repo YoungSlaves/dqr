@@ -10,6 +10,7 @@ return function(Context)
     RT.destroyed = false
     RT.modHalt = false
     RT.farmEnabled = Automation.Enabled ~= false
+    RT.Stats = { Runs = 0, Deaths = 0, Kills = 0, Wins = 0, Losses = 0 }
     Context.NOVIS = false
     CFG.visuals = true
     CFG.minimap = false
@@ -168,6 +169,31 @@ return function(Context)
     end
     Context.autoStartTick = AutoStartTick
 
+    local function FreeMovement()
+        local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
+        local Character = Player and Player.Character
+        local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+        if Context.LC and Context.LC.off then
+            pcall(Context.LC.off)
+        end
+        if Humanoid then
+            if Context.restoreWalkSpeed then
+                pcall(Context.restoreWalkSpeed, Humanoid)
+            end
+            pcall(function()
+                Humanoid:Move(Vector3.zero, false)
+            end)
+            if Humanoid.WalkSpeed <= 0 then
+                Humanoid.WalkSpeed = 16
+            end
+            Humanoid.AutoRotate = true
+        end
+        if Context.MV then
+            Context.MV.driving = false
+            Context.MV.cmdDir = nil
+        end
+    end
+
     local ToggleButton, ToggleGui
     local function SetEnabled(Enabled, Save)
         if Enabled and not Save and Global.SwangyManualOff == true then
@@ -213,6 +239,7 @@ return function(Context)
             if Context.clearDrawing then
                 pcall(Context.clearDrawing)
             end
+            FreeMovement()
         end
         Global.SwangyManualOff = not Enabled
         if ToggleButton and ToggleButton.Parent then
@@ -245,6 +272,11 @@ return function(Context)
         ToggleButton.Name = "Power"
         ToggleButton.AnchorPoint = Vector2.new(1, 0)
         ToggleButton.Position = UDim2.new(1, -14, 0, 14)
+        local SavedPosition = (Context.SWANGY.Automation or {}).ButtonPosition
+        if type(SavedPosition) == "table" and tonumber(SavedPosition.X) and tonumber(SavedPosition.Y) then
+            ToggleButton.AnchorPoint = Vector2.new(0, 0)
+            ToggleButton.Position = UDim2.fromOffset(SavedPosition.X, SavedPosition.Y)
+        end
         ToggleButton.Size = UDim2.fromOffset(138, 34)
         ToggleButton.BackgroundColor3 = Context.headlessEnabled and Color3.fromRGB(26, 118, 78) or Color3.fromRGB(118, 42, 48)
         ToggleButton.BorderSizePixel = 0
@@ -267,7 +299,7 @@ return function(Context)
         local ArmedAt, LastToggle = os.clock() + 0.5, 0
         local function OnToggle()
             local Now = os.clock()
-            if Now < ArmedAt or Now - LastToggle < 0.35 then
+            if Now < ArmedAt or Now < (RT.SuppressToggleUntil or 0) or Now - LastToggle < 0.35 then
                 return
             end
             LastToggle = Now
@@ -275,12 +307,201 @@ return function(Context)
         end
         ToggleButton.MouseButton1Click:Connect(OnToggle)
         ToggleButton.TouchTap:Connect(OnToggle)
+
+        local UserInputService = game:GetService("UserInputService")
+        local StartPosition, StartInput, Dragging, Moved
+        local function BeginDrag(Input)
+            if
+                Input.UserInputType ~= Enum.UserInputType.MouseButton1
+                and Input.UserInputType ~= Enum.UserInputType.Touch
+            then
+                return
+            end
+            Dragging, Moved = true, false
+            StartPosition, StartInput = ToggleButton.AbsolutePosition, Input.Position
+        end
+        local function MoveDrag(Input)
+            if not Dragging then
+                return
+            end
+            local Delta = Input.Position - StartInput
+            if Delta.Magnitude > 3 then
+                Moved = true
+            end
+            local Camera = workspace.CurrentCamera
+            local Viewport = Camera and Camera.ViewportSize or Vector2.new(1920, 1080)
+            local Size = ToggleButton.AbsoluteSize
+            ToggleButton.AnchorPoint = Vector2.new(0, 0)
+            ToggleButton.Position = UDim2.fromOffset(
+                math.clamp(StartPosition.X + Delta.X, 0, math.max(Viewport.X - Size.X, 0)),
+                math.clamp(StartPosition.Y + Delta.Y, 0, math.max(Viewport.Y - Size.Y, 0))
+            )
+        end
+        local function EndDrag()
+            if not Dragging then
+                return
+            end
+            Dragging = false
+            if not Moved then
+                return
+            end
+            RT.SuppressToggleUntil = os.clock() + 0.5
+            Context.SWANGY.Automation = Context.SWANGY.Automation or {}
+            Context.SWANGY.Automation.ButtonPosition = {
+                X = ToggleButton.AbsolutePosition.X,
+                Y = ToggleButton.AbsolutePosition.Y,
+            }
+            if Context.saveSwangyConfig then
+                pcall(Context.saveSwangyConfig)
+            end
+        end
+        Context.toggleDragConnections = {
+            ToggleButton.InputBegan:Connect(BeginDrag),
+            UserInputService.InputChanged:Connect(MoveDrag),
+            UserInputService.InputEnded:Connect(EndDrag),
+        }
         Context.toggleGui = ToggleGui
         Context.toggleButton = ToggleButton
     end
 
+    local HudGui, HudLabels
+    local function BuildHUD()
+        local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
+        local PlayerGui = Player and Player:FindFirstChildOfClass("PlayerGui")
+        if not PlayerGui then
+            return
+        end
+        local Existing = PlayerGui:FindFirstChild("SwangyHUD")
+        if Existing then
+            Existing:Destroy()
+        end
+        HudGui = Instance.new("ScreenGui")
+        HudGui.Name = "SwangyHUD"
+        HudGui.ResetOnSpawn = false
+        HudGui.IgnoreGuiInset = true
+        HudGui.DisplayOrder = 499
+        HudGui.Parent = PlayerGui
+
+        local Panel = Instance.new("Frame")
+        Panel.Name = "Stats"
+        Panel.AnchorPoint = Vector2.new(1, 0)
+        Panel.Position = UDim2.new(1, -14, 0, 58)
+        Panel.Size = UDim2.fromOffset(164, 156)
+        Panel.BackgroundColor3 = Color3.fromRGB(9, 17, 22)
+        Panel.BackgroundTransparency = 0.18
+        Panel.BorderSizePixel = 0
+        Panel.Active = false
+        Panel.Parent = HudGui
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 8)
+        Corner.Parent = Panel
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = Color3.fromRGB(117, 242, 199)
+        Stroke.Thickness = 1
+        Stroke.Transparency = 0.55
+        Stroke.Parent = Panel
+
+        local Title = Instance.new("TextLabel")
+        Title.Name = "Title"
+        Title.BackgroundTransparency = 1
+        Title.Position = UDim2.fromOffset(10, 7)
+        Title.Size = UDim2.new(1, -20, 0, 18)
+        Title.Text = "SWANGY STATS"
+        Title.TextColor3 = Color3.fromRGB(117, 242, 199)
+        Title.TextSize = 12
+        Title.Font = Enum.Font.GothamBold
+        Title.TextXAlignment = Enum.TextXAlignment.Left
+        Title.Parent = Panel
+
+        HudLabels = {}
+        local Rows = { "FPS", "RUNS", "DEATHS", "KILLS", "WINS", "LOSSES" }
+        for Index, Name in ipairs(Rows) do
+            local Label = Instance.new("TextLabel")
+            Label.Name = Name
+            Label.BackgroundTransparency = 1
+            Label.Position = UDim2.fromOffset(10, 27 + (Index - 1) * 19)
+            Label.Size = UDim2.new(1, -20, 0, 17)
+            Label.Text = Name .. "   0"
+            Label.TextColor3 = Name == "FPS" and Color3.fromRGB(117, 242, 199)
+                or Color3.fromRGB(226, 238, 246)
+            Label.TextSize = 12
+            Label.Font = Enum.Font.Code
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = Panel
+            HudLabels[Name] = Label
+        end
+
+        local Stats = RT.Stats
+        local Frames, FpsAt, Fps = 0, os.clock(), 0
+        local RenderConnection = RunService.RenderStepped:Connect(function()
+            Frames += 1
+            local Now = os.clock()
+            if Now - FpsAt >= 1 then
+                Fps = math.floor(Frames / (Now - FpsAt) + 0.5)
+                Frames, FpsAt = 0, Now
+            end
+        end)
+
+        local function WatchDeaths()
+            local Character = Player.Character
+            local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+            if not Humanoid or Stats.DeathHumanoid == Humanoid then
+                return
+            end
+            Stats.DeathHumanoid = Humanoid
+            Stats.DeathConnections = Stats.DeathConnections or {}
+            Stats.DeathConnections[#Stats.DeathConnections + 1] = Humanoid.Died:Connect(function()
+                Stats.Deaths += 1
+            end)
+        end
+        WatchDeaths()
+        local CharacterConnection = Player.CharacterAdded:Connect(function()
+            task.wait(0.5)
+            WatchDeaths()
+        end)
+
+        local KillHook = Context.noteKillAll
+        if type(KillHook) == "function" and not Context.HeadlessKillHook then
+            Context.HeadlessKillHook = true
+            Context.noteKillAll = function(Boss)
+                Stats.Kills += 1
+                return KillHook(Boss)
+            end
+        end
+
+        Context.hudConnections = { RenderConnection, CharacterConnection }
+        Context.hudGui = HudGui
+        Context.hudLabels = HudLabels
+        task.spawn(function()
+            while not RT.destroyed do
+                task.wait(0.35)
+                local WH = Context.WH
+                local Started = workspace:FindFirstChild("dungeonStarted")
+                if WH then
+                    if WH.run and WH.run ~= Stats.LastRun then
+                        Stats.LastRun = WH.run
+                        Stats.Runs += 1
+                    end
+                    Stats.Kills = math.max(Stats.Kills, (tonumber(WH.mobKills) or 0) + (tonumber(WH.bossKills) or 0))
+                    Stats.Wins = tonumber(WH.wins) or Stats.Wins
+                    Stats.Losses = tonumber(WH.losses) or Stats.Losses
+                elseif Started and Started.Value and Stats.RunJob ~= game.JobId then
+                    Stats.RunJob = game.JobId
+                    Stats.Runs += 1
+                end
+                HudLabels.FPS.Text = ("FPS      %d"):format(Fps)
+                HudLabels.RUNS.Text = ("RUNS     %d"):format(Stats.Runs)
+                HudLabels.DEATHS.Text = ("DEATHS   %d"):format(Stats.Deaths)
+                HudLabels.KILLS.Text = ("KILLS    %d"):format(Stats.Kills)
+                HudLabels.WINS.Text = ("WINS     %d"):format(Stats.Wins)
+                HudLabels.LOSSES.Text = ("LOSSES   %d"):format(Stats.Losses)
+            end
+        end)
+    end
+
     SetEnabled(not ManualOff and Automation.Enabled ~= false, false)
     BuildToggle()
+    BuildHUD()
 
     if Context.readerStart then
         local Ok, ErrorMessage = pcall(Context.readerStart)
@@ -327,6 +548,29 @@ return function(Context)
         end
         if Context.clearDrawing then
             pcall(Context.clearDrawing)
+        end
+        FreeMovement()
+        if Context.toggleDragConnections then
+            for _, DragConnection in ipairs(Context.toggleDragConnections) do
+                pcall(DragConnection.Disconnect, DragConnection)
+            end
+            Context.toggleDragConnections = nil
+        end
+        if Context.hudConnections then
+            for _, HudConnection in ipairs(Context.hudConnections) do
+                pcall(HudConnection.Disconnect, HudConnection)
+            end
+            Context.hudConnections = nil
+        end
+        if RT.Stats and RT.Stats.DeathConnections then
+            for _, DeathConnection in ipairs(RT.Stats.DeathConnections) do
+                pcall(DeathConnection.Disconnect, DeathConnection)
+            end
+        end
+        if HudGui then
+            pcall(HudGui.Destroy, HudGui)
+            HudGui = nil
+            Context.hudGui = nil
         end
         if ToggleGui then
             pcall(ToggleGui.Destroy, ToggleGui)

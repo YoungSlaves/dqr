@@ -11128,7 +11128,7 @@ return function(context)
         mapSignal.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, MP.Fern),
             ColorSequenceKeypoint.new(0.55, MP.LeafLight),
-            ColorSequenceKeypoint.new(1, MP.Purple),
+            ColorSequenceKeypoint.new(1, MP.Hot),
         })
         mapSignal.Parent = mapMoss
         local sharedValue48 = helper155("Frame", {

@@ -81,6 +81,7 @@ return function(Context)
             AutoQueueReplay = true,
             AutoFarmByPlace = true,
             Walls = true,
+            BlackScreen = false,
         },
         Visuals = {
             DrawHazards = true,

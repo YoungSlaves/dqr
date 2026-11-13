@@ -68,6 +68,16 @@ return function(Context)
                 Health = "",
                 Image = "logo.png",
             },
+            Spoofer = {
+                Enabled = false,
+                Name = "",
+                PFP = "",
+                Level = "",
+                Gold = "",
+                Gems = "",
+                EXP = "",
+                Health = "",
+            },
         },
         Automation = {
             Enabled = true,

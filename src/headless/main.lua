@@ -355,9 +355,11 @@ return function(Context)
     end
 
     local UIS = game:GetService("UserInputService")
-    local ToggleGui, ToggleButton, PowerButton, PerfButton, BlackButton, ResetButton
+    local ToggleGui, ToggleButton, PowerButton, PerfButton, BlackButton, SpoofButton, ResetButton
     local HudGui, HudPanel, HudLabels
-    local BlackGui
+    local BlackGui, SpoofGui, SpoofPanel, SpoofToggle
+    local SpoofFields = {}
+    local SpoofOriginals = {}
 
     local function SaveAutomation()
         if Context.saveSwangyConfig then
@@ -418,6 +420,286 @@ return function(Context)
         Connections[#Connections + 1] = UIS.InputChanged:Connect(MoveDrag)
         Connections[#Connections + 1] = UIS.InputEnded:Connect(EndDrag)
     end
+    local function SpoofSettings()
+        Context.SWANGY.Universal = Context.SWANGY.Universal or {}
+        Context.SWANGY.Universal.Spoofer = Context.SWANGY.Universal.Spoofer or {}
+        return Context.SWANGY.Universal.Spoofer
+    end
+
+    local function SpoofTarget()
+        local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
+        local PlayerGui = Player and Player:FindFirstChildOfClass("PlayerGui")
+        local Status = PlayerGui and PlayerGui:FindFirstChild("playerStatus")
+        return Status and Status:FindFirstChild("Frame")
+    end
+
+    local function RestoreSpoof()
+        for Object, Properties in pairs(SpoofOriginals) do
+            if Object.Parent then
+                for Property, Record in pairs(Properties) do
+                    pcall(function()
+                        Object[Property] = Record.Value
+                    end)
+                end
+            end
+        end
+        SpoofOriginals = {}
+    end
+
+    local function SetSpoof(Object, Property, Value)
+        if not Object then
+            return
+        end
+        local Properties = SpoofOriginals[Object]
+        if not Properties then
+            Properties = {}
+            SpoofOriginals[Object] = Properties
+        end
+        local Record = Properties[Property]
+        if not Record then
+            Record = { Value = Object[Property] }
+            Properties[Property] = Record
+        end
+        if Value ~= nil and tostring(Value) ~= "" then
+            pcall(function()
+                Object[Property] = Value
+            end)
+        else
+            pcall(function()
+                Object[Property] = Record.Value
+            end)
+        end
+    end
+
+    local function SpoofPortrait(Value)
+        if type(Value) ~= "string" or Value == "" then
+            return nil
+        end
+        local UserId = Value:match("^userId:(%d+)$")
+        if UserId then
+            return ("https://www.roblox.com/headshot-thumbnail/image?userId=%s&width=420&height=420&format=png"):format(UserId)
+        end
+        if Value:match("^%d+$") then
+            return "rbxassetid://" .. Value
+        end
+        return Value
+    end
+
+    local function ApplySpoof()
+        local Data = SpoofSettings()
+        if Data.Enabled ~= true then
+            RestoreSpoof()
+            return
+        end
+        local Frame = SpoofTarget()
+        if not Frame then
+            return
+        end
+        local function Find(...)
+            local Object = Frame
+            for _, Name in ipairs({ ... }) do
+                if not Object then
+                    return nil
+                end
+                Object = Object:FindFirstChild(Name)
+            end
+            return Object
+        end
+        local function Display(Value)
+            return Value == nil and nil or tostring(Value)
+        end
+        SetSpoof(Find("playerName"), "Text", Display(Data.Name))
+        local Portrait = Find("portraitBorder", "portrait")
+        local Image = SpoofPortrait(tostring(Data.PFP or ""))
+        SetSpoof(Portrait, "Image", Image)
+        if Portrait then
+            SetSpoof(Portrait, "ImageColor3", Image and Color3.new(1, 1, 1) or nil)
+        end
+        SetSpoof(Find("levelBorder", "level"), "Text", Display(Data.Level))
+        SetSpoof(Find("moneyMain", "TextLabel"), "Text", Display(Data.Gold))
+        SetSpoof(Find("moneyMain", "GemsText"), "Text", Display(Data.Gems))
+        SetSpoof(Find("xpFrame", "xp"), "Text", Display(Data.EXP))
+        SetSpoof(Find("healthFrame", "health"), "Text", Display(Data.Health))
+    end
+
+    local function UpdateSpoofButton()
+        local Enabled = SpoofSettings().Enabled == true
+        if SpoofButton and SpoofButton.Parent then
+            SpoofButton.BackgroundColor3 = Enabled and Color3.fromRGB(45, 37, 56)
+                or Color3.fromRGB(31, 33, 39)
+            SpoofButton.TextColor3 = Enabled and Color3.fromRGB(222, 190, 255)
+                or Color3.fromRGB(177, 184, 195)
+        end
+        if SpoofToggle and SpoofToggle.Parent then
+            SpoofToggle.Text = Enabled and "SPOOF ON" or "SPOOF OFF"
+            SpoofToggle.BackgroundColor3 = Enabled and Color3.fromRGB(45, 37, 56)
+                or Color3.fromRGB(31, 33, 39)
+            SpoofToggle.TextColor3 = Enabled and Color3.fromRGB(222, 190, 255)
+                or Color3.fromRGB(177, 184, 195)
+        end
+    end
+
+    local function BuildSpoofPanel()
+        local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
+        local PlayerGui = Player and Player:FindFirstChildOfClass("PlayerGui")
+        if not PlayerGui then
+            return
+        end
+        local Existing = PlayerGui:FindFirstChild("SwangySpoof")
+        if Existing then
+            Existing:Destroy()
+        end
+        SpoofGui = Instance.new("ScreenGui")
+        SpoofGui.Name = "SwangySpoof"
+        SpoofGui.ResetOnSpawn = false
+        SpoofGui.IgnoreGuiInset = false
+        SpoofGui.DisplayOrder = 9003
+        SpoofGui.Enabled = false
+        SpoofGui.Parent = PlayerGui
+
+        SpoofPanel = Instance.new("Frame")
+        SpoofPanel.Name = "Panel"
+        SpoofPanel.AnchorPoint = Vector2.new(0.5, 0.5)
+        SpoofPanel.Position = UDim2.fromScale(0.5, 0.5)
+        SpoofPanel.Size = UDim2.fromOffset(380, 322)
+        SpoofPanel.BackgroundColor3 = Color3.fromRGB(16, 17, 22)
+        SpoofPanel.BackgroundTransparency = 0.04
+        SpoofPanel.BorderSizePixel = 0
+        SpoofPanel.Active = true
+        SpoofPanel.Parent = SpoofGui
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 10)
+        Corner.Parent = SpoofPanel
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = Color3.fromRGB(64, 67, 79)
+        Stroke.Thickness = 1
+        Stroke.Transparency = 0.25
+        Stroke.Parent = SpoofPanel
+
+        local Title = Instance.new("TextLabel")
+        Title.BackgroundTransparency = 1
+        Title.Position = UDim2.fromOffset(16, 10)
+        Title.Size = UDim2.new(1, -60, 0, 20)
+        Title.Text = "LOCAL SPOOFER"
+        Title.TextColor3 = Color3.fromRGB(255, 111, 170)
+        Title.TextSize = 12
+        Title.Font = Enum.Font.GothamBold
+        Title.TextXAlignment = Enum.TextXAlignment.Left
+        Title.Parent = SpoofPanel
+
+        local Close = Instance.new("TextButton")
+        Close.Name = "Close"
+        Close.AnchorPoint = Vector2.new(1, 0)
+        Close.Position = UDim2.new(1, -10, 0, 6)
+        Close.Size = UDim2.fromOffset(24, 24)
+        Close.BackgroundTransparency = 1
+        Close.Text = "×"
+        Close.TextColor3 = Color3.fromRGB(177, 184, 195)
+        Close.TextSize = 16
+        Close.Font = Enum.Font.GothamMedium
+        Close.Parent = SpoofPanel
+        Close.MouseButton1Click:Connect(function()
+            if SpoofGui then
+                SpoofGui.Enabled = false
+            end
+        end)
+
+        local Rows = {
+            { Key = "Name", Label = "NAME", Placeholder = "Display name" },
+            { Key = "PFP", Label = "PFP", Placeholder = "URL, asset id, or userId:123" },
+            { Key = "Level", Label = "LEVEL", Placeholder = "Level" },
+            { Key = "Gold", Label = "GOLD", Placeholder = "Gold amount" },
+            { Key = "Gems", Label = "GEMS", Placeholder = "Gem amount" },
+            { Key = "EXP", Label = "EXP", Placeholder = "EXP display" },
+            { Key = "Health", Label = "HEALTH", Placeholder = "Health display" },
+        }
+        SpoofFields = {}
+        for Index, Row in ipairs(Rows) do
+            local Y = 38 + (Index - 1) * 32
+            local Label = Instance.new("TextLabel")
+            Label.BackgroundTransparency = 1
+            Label.Position = UDim2.fromOffset(16, Y)
+            Label.Size = UDim2.fromOffset(64, 24)
+            Label.Text = Row.Label
+            Label.TextColor3 = Color3.fromRGB(126, 134, 148)
+            Label.TextSize = 9
+            Label.Font = Enum.Font.GothamBold
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = SpoofPanel
+            local Box = Instance.new("TextBox")
+            Box.Name = Row.Key
+            Box.Position = UDim2.fromOffset(88, Y)
+            Box.Size = UDim2.fromOffset(276, 24)
+            Box.BackgroundColor3 = Color3.fromRGB(27, 29, 35)
+            Box.BorderSizePixel = 0
+            Box.Text = tostring(SpoofSettings()[Row.Key] or "")
+            Box.PlaceholderText = Row.Placeholder
+            Box.PlaceholderColor3 = Color3.fromRGB(91, 98, 111)
+            Box.TextColor3 = Color3.fromRGB(238, 243, 249)
+            Box.TextSize = 11
+            Box.Font = Enum.Font.GothamMedium
+            Box.ClearTextOnFocus = false
+            Box.Parent = SpoofPanel
+            local BoxCorner = Instance.new("UICorner")
+            BoxCorner.CornerRadius = UDim.new(0, 5)
+            BoxCorner.Parent = Box
+            local BoxStroke = Instance.new("UIStroke")
+            BoxStroke.Color = Color3.fromRGB(58, 62, 73)
+            BoxStroke.Thickness = 1
+            BoxStroke.Transparency = 0.45
+            BoxStroke.Parent = Box
+            Box.FocusLost:Connect(function()
+                SpoofSettings()[Row.Key] = Box.Text
+                SaveAutomation()
+                ApplySpoof()
+            end)
+            SpoofFields[Row.Key] = Box
+        end
+
+        SpoofToggle = Instance.new("TextButton")
+        SpoofToggle.Name = "Enabled"
+        SpoofToggle.Position = UDim2.fromOffset(16, 278)
+        SpoofToggle.Size = UDim2.fromOffset(120, 28)
+        SpoofToggle.BorderSizePixel = 0
+        SpoofToggle.Text = "SPOOF OFF"
+        SpoofToggle.TextSize = 10
+        SpoofToggle.Font = Enum.Font.GothamBold
+        SpoofToggle.Parent = SpoofPanel
+        local ToggleCorner = Instance.new("UICorner")
+        ToggleCorner.CornerRadius = UDim.new(0, 6)
+        ToggleCorner.Parent = SpoofToggle
+        local ToggleStroke = Instance.new("UIStroke")
+        ToggleStroke.Color = Color3.fromRGB(65, 69, 80)
+        ToggleStroke.Thickness = 1
+        ToggleStroke.Transparency = 0.55
+        ToggleStroke.Parent = SpoofToggle
+        SpoofToggle.MouseButton1Click:Connect(function()
+            local Data = SpoofSettings()
+            Data.Enabled = not (Data.Enabled == true)
+            SaveAutomation()
+            UpdateSpoofButton()
+            ApplySpoof()
+        end)
+        UpdateSpoofButton()
+        Context.spoofGui = SpoofGui
+    end
+
+    local function ToggleSpoofPanel()
+        if not SpoofGui or not SpoofGui.Parent then
+            BuildSpoofPanel()
+        end
+        if SpoofGui then
+            SpoofGui.Enabled = not SpoofGui.Enabled
+        end
+    end
+
+    task.spawn(function()
+        while not RT.destroyed do
+            task.wait(0.25)
+            pcall(ApplySpoof)
+        end
+    end)
+
     local function SetEnabled(Enabled, Save)
         if Enabled and not Save and Global.SwangyManualOff == true then
             Enabled = false
@@ -595,7 +877,7 @@ return function(Context)
             Rail.AnchorPoint = Vector2.new(0, 0)
             Rail.Position = UDim2.fromOffset(SavedPosition.X, SavedPosition.Y)
         end
-        Rail.Size = UDim2.fromOffset(390, 34)
+        Rail.Size = UDim2.fromOffset(452, 34)
         Rail.BackgroundColor3 = Color3.fromRGB(16, 17, 22)
         Rail.BackgroundTransparency = 0.08
         Rail.BorderSizePixel = 0
@@ -659,7 +941,8 @@ return function(Context)
         PowerButton = NewButton("Power", "ON", 56, 1)
         PerfButton = NewButton("Performance", "PERFORMANCE", 104, 2)
         BlackButton = NewButton("GPU", "GPU RENDERING", 104, 3)
-        ResetButton = NewButton("ResetStats", "RESET STATS", 88, 4)
+        SpoofButton = NewButton("Spoof", "SPOOF", 60, 4)
+        ResetButton = NewButton("ResetStats", "RESET STATS", 88, 5)
         ResetButton.TextColor3 = Color3.fromRGB(238, 155, 170)
         ToggleButton = PowerButton
 
@@ -687,6 +970,9 @@ return function(Context)
         Bind(BlackButton, function()
             SetBlackScreen(not RT.BlackScreen, true)
         end)
+        Bind(SpoofButton, function()
+            ToggleSpoofPanel()
+        end)
         Bind(ResetButton, function()
             ResetStats()
         end)
@@ -700,10 +986,11 @@ return function(Context)
         PowerButton.TextColor3 = Context.headlessEnabled and Color3.fromRGB(145, 235, 195)
             or Color3.fromRGB(177, 184, 195)
         UpdateBlackButton()
+        UpdateSpoofButton()
         Context.toggleGui = ToggleGui
         Context.toggleButton = PowerButton
         Context.controlRail = Rail
-        Context.controlButtons = { PowerButton, PerfButton, BlackButton, ResetButton }
+        Context.controlButtons = { PowerButton, PerfButton, BlackButton, SpoofButton, ResetButton }
     end
 
     local function BuildHUD()
@@ -1011,6 +1298,7 @@ return function(Context)
         if Context.clearDrawing then
             pcall(Context.clearDrawing)
         end
+        RestoreSpoof()
         FreeMovement()
         if Context.toggleDragConnections then
             for _, DragConnection in ipairs(Context.toggleDragConnections) do
@@ -1057,6 +1345,7 @@ return function(Context)
             PowerButton = nil
             PerfButton = nil
             BlackButton = nil
+            SpoofButton = nil
             ResetButton = nil
             Context.toggleButton = nil
             Context.controlButtons = nil
@@ -1065,6 +1354,14 @@ return function(Context)
             pcall(BlackGui.Destroy, BlackGui)
             BlackGui = nil
             Context.blackGui = nil
+        end
+        if SpoofGui then
+            pcall(SpoofGui.Destroy, SpoofGui)
+            SpoofGui = nil
+            SpoofPanel = nil
+            SpoofToggle = nil
+            SpoofFields = {}
+            Context.spoofGui = nil
         end
         if RunService and RunService.Set3dRenderingEnabled then
             pcall(RunService.Set3dRenderingEnabled, RunService, true)

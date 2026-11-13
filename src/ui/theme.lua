@@ -145,10 +145,12 @@ return function(context)
     -- frame, never over the network: rbxasset:// is a client-local lookup.
     local candidates = {
         title = {
+            family = "rbxasset://fonts/families/GothamBlack.json",
             enumName = "GothamBlack",
-            substitute = Enum.Font.GothamBold,
+            substitute = Enum.Font.Garamond,
         },
         body = {
+            family = "rbxasset://fonts/families/Gotham.json",
             enumName = "Gotham",
             substitute = Enum.Font.SourceSans,
         },

@@ -7,10 +7,10 @@
 -- it is used for JSON only.
 --
 -- Resolver order (first available wins), per the DQR network policy:
---   1. request   (Potassium; aliases http_request, http.request)   GET + POST
---   2. httpget   (Potassium; alias HttpGet)                        GET only
---   3. syn.request                                                 GET + POST
---   4. fluxus.request, bare http_request, http.request             GET + POST
+--   1. request                                                         GET + POST
+--   2. httpget   (Potassium; alias HttpGet)                            GET only
+--   3. syn.request                                                     GET + POST
+--   4. fluxus.request, bare http_request, http.request                 GET + POST
 --
 -- Every call is pcall'ed: a throwing transport reads as network failure, never
 -- as an uncaught error and never as empty success.  Success means 2xx AND a
@@ -75,18 +75,11 @@ return function(context)
         return nil
     end
 
-    -- 1. Potassium `request` and its documented aliases.
+    -- 1. Potassium `request`.
     if not net.fn then
         local fn = lookup("request")
-        local name = "request"
-        if not fn then
-            fn, name = lookup("http_request"), "http_request"
-        end
-        if not fn then
-            fn, name = lookupHttpRequest(), "http.request"
-        end
         if fn then
-            net.fn, net.kind, net.name = fn, "request", name
+            net.fn, net.kind, net.name = fn, "request", "request"
         end
     end
 
@@ -119,11 +112,13 @@ return function(context)
             net.fn, net.kind, net.name = fluxusTable.request, "request", "fluxus.request"
         else
             local bare = lookup("http_request")
-            if not bare then
-                bare = lookupHttpRequest()
-            end
             if bare then
                 net.fn, net.kind, net.name = bare, "request", "http_request"
+            else
+                local http = lookupHttpRequest()
+                if http then
+                    net.fn, net.kind, net.name = http, "request", "http.request"
+                end
             end
         end
     end

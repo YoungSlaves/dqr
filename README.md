@@ -113,7 +113,7 @@ the version downloaded.
 * Wood grain is a `UIGradient` per face (`Bark → Wood → Bark → Wood`, rotations 90 / 8) — never a
   shared instance. Accent gradients are gone; the only gradients left are wood grain and moss
   shading.
-* Fonts resolve once at boot (Fondamento for titles, Merriweather for body) with `asset → enum →
+* Fonts resolve once at boot (Gotham Black for titles, Gotham for body) with `asset → enum →
   substitute` fallback, logged as one `UI` line. No font is ever fetched.
 * `VINE_IMAGE_ID` / `LEAF_IMAGE_ID` are `nil` in `src/ui/theme.lua`; while nil no `ImageLabel` is
   created at all. Set a verified id to opt in.
@@ -173,7 +173,7 @@ in Roblox before trusting the visual result.
   capture. The page bodies are unchanged; the bottom-left HUD and the
   top-right minimap chrome are reskinned in place to the same Duskwood palette.
 * **Exactly three GUIs applies to the menu layer.** Four pre-existing feature
-  screens remain (bug report, party lobby �2, cast timer). Deleting them would
+  screens remain (bug report, party lobby �2, cast timer). Deleting them would
   break features, so they stay.
 * **`buildShell` was replaced wholesale.** It is one contiguous block; its
   page table contract is reimplemented in `src/ui/window.lua`. The welcome
@@ -187,6 +187,6 @@ in Roblox before trusting the visual result.
   only remaps hard-coded literals; defaults are untouched for parity.
 * The colour picker's hue strip keeps a full RGB spectrum (`Color3.fromRGB` in
   `src/ui/kit.lua`). A two-colour forest gradient would make the picker unable
-  to select colours � the one place a literal spectrum is required.
+  to select colours � the one place a literal spectrum is required.
 * Feature bodies still contain the colour defaults and gameplay colours they
   shipped with; those are user-facing settings, not menu chrome.

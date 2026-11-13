@@ -103,22 +103,11 @@ end
 
 local transport
 do
-    local fn, name = globalOf("request"), "request"
-    if not fn then
-        fn, name = globalOf("http_request"), "http_request"
-    end
-    if not fn then
-        local ok, httpTable = pcall(function()
-            local env = type(getgenv) == "function" and getgenv() or _G
-            return rawget(env, "http") or rawget(_G, "http")
-        end)
-        if ok and type(httpTable) == "table" and type(httpTable.request) == "function" then
-            fn, name = httpTable.request, "http.request"
-        end
-    end
+    local fn = globalOf("request")
     if fn then
-        transport = { fn = fn, kind = "request", name = name }
-    else
+        transport = { fn = fn, kind = "request", name = "request" }
+    end
+    if not transport then
         local get = globalOf("httpget") or globalOf("HttpGet")
         if get then
             transport = { fn = get, kind = "httpget", name = "httpget" }
@@ -146,6 +135,14 @@ do
         local bare = globalOf("http_request")
         if bare then
             transport = { fn = bare, kind = "request", name = "http_request" }
+        else
+            local ok, httpTable = pcall(function()
+                local env = type(getgenv) == "function" and getgenv() or _G
+                return rawget(env, "http") or rawget(_G, "http")
+            end)
+            if ok and type(httpTable) == "table" and type(httpTable.request) == "function" then
+                transport = { fn = httpTable.request, kind = "request", name = "http.request" }
+            end
         end
     end
 end
@@ -471,6 +468,33 @@ local function readOrder()
     return order
 end
 
+local function validManifest(manifest)
+    if type(manifest) ~= "table" or type(manifest.version) ~= "string" then
+        return false
+    end
+    if manifest.basePath ~= nil and (type(manifest.basePath) ~= "string" or manifest.basePath == "") then
+        return false
+    end
+    if type(manifest.modules) ~= "table" or #manifest.modules == 0 then
+        return false
+    end
+    local names = {}
+    for _, module in ipairs(manifest.modules) do
+        if
+            type(module) ~= "table"
+            or type(module.name) ~= "string"
+            or module.name == ""
+            or type(module.path) ~= "string"
+            or module.path == ""
+            or names[module.name]
+        then
+            return false
+        end
+        names[module.name] = true
+    end
+    return true
+end
+
 local function loadCache()
     local order = readOrder()
     for index = #order, 1, -1 do
@@ -479,7 +503,7 @@ local function loadCache()
         local manifestText = fs.read(dir .. "modules.json")
         if manifestText then
             local ok, manifest = pcall(HttpService.JSONDecode, HttpService, manifestText)
-            if ok and type(manifest) == "table" and manifest.version == version and type(manifest.modules) == "table" then
+            if ok and validManifest(manifest) and manifest.version == version then
                 local sources, complete = {}, true
                 for _, module in ipairs(manifest.modules) do
                     local source = fs.read(dir .. module.name .. ".lua")
@@ -489,7 +513,7 @@ local function loadCache()
                     end
                     sources[module.name] = source
                 end
-                if complete and #manifest.modules > 0 then
+                if complete then
                     return manifest, sources, version
                 end
             end
@@ -548,7 +572,7 @@ local function main()
         local body = fetch(url)
         if body then
             local ok, parsed = pcall(HttpService.JSONDecode, HttpService, body)
-            if ok and type(parsed) == "table" and type(parsed.modules) == "table" and parsed.version then
+            if ok and validManifest(parsed) then
                 manifest, manifestText = parsed, body
                 break
             end

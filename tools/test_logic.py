@@ -118,7 +118,7 @@ end
 FONT_ENUM = (
     FONT_PRELUDE.replace(
         "__ENUMS__",
-        'Enum = { Font = { Fondamento = "Fondamento", Merriweather = "Merriweather", '
+        'Enum = { Font = { GothamBlack = "GothamBlack", Gotham = "Gotham", '
         'Garamond = "Garamond", SourceSans = "SourceSans" } }',
     ).replace("__MODULE__", THEME)
     + """
@@ -131,7 +131,10 @@ ok(logs[1] and logs[1]:find("title=enum") ~= nil, "one boot line reports the pat
 )
 
 FONT_SUB = (
-    FONT_PRELUDE.replace("__ENUMS__", "Enum = { Font = {} }").replace("__MODULE__", THEME)
+    FONT_PRELUDE.replace(
+        "__ENUMS__",
+        'Enum = { Font = { Garamond = "Garamond", SourceSans = "SourceSans" } }',
+    ).replace("__MODULE__", THEME)
     + """
 ok(theme.fonts.title.path == "substitute", "title uses substitute")
 ok(theme.fonts.body.path == "substitute", "body uses substitute")
@@ -144,7 +147,7 @@ ok(theme.fonts.body.Font == Enum.Font.SourceSans, "body substitute is SourceSans
 FONT_ASSET = (
     FONT_PRELUDE.replace(
         "__ENUMS__",
-        'Enum = { Font = { Fondamento = "Fondamento", Merriweather = "Merriweather", '
+        'Enum = { Font = { GothamBlack = "GothamBlack", Gotham = "Gotham", '
         'Garamond = "Garamond", SourceSans = "SourceSans" } }',
     )
     .replace('Font = { new = function() calls = calls + 1; error("no font asset") end }', "")

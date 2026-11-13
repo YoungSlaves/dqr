@@ -143,9 +143,19 @@ return function(context)
     -- Plank row: own grain + deterministic rotation + firefly hover stroke.
     function kit.row(parent, label, order, reserved, height)
         local index = nextRowIndex(parent)
-        local card = shapes.plankRow(parent, index)
-        card.Size = UDim2.new(1, 0, 0, height or theme.row.height)
-        card.LayoutOrder = order or 1
+        local row = shapes.plankRow(parent, index)
+        row.Size = UDim2.new(1, 0, 0, height or theme.row.height)
+        row.LayoutOrder = order or 1
+
+        -- The plank's bottom edge and top hairline are decoration, not content.
+        -- Keep them outside the horizontal list layout; otherwise their full-row
+        -- widths push every label and control off the right side of the row.
+        local card = Instance.new("Frame")
+        card.Name = "Row"
+        card.BackgroundTransparency = 1
+        card.BorderSizePixel = 0
+        card.Size = UDim2.fromScale(1, 1)
+        card.Parent = row
         shapes.pad(card, 0, theme.gap.section, 0, theme.gap.section)
         local layout = prim.hlist(card, theme.gap.group)
         local text = prim.text(card, {
@@ -161,7 +171,7 @@ return function(context)
         hover.Thickness = 1
         hover.Transparency = 1
         hover.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        hover.Parent = card
+        hover.Parent = row
         card.MouseEnter:Connect(function()
             TweenService:Create(
                 hover,

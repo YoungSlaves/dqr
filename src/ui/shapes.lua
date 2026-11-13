@@ -511,7 +511,7 @@ return function(context)
     -- deterministic rotation ((index*7)%3-1)*0.6.
     function shapes.plankRow(parent, index)
         local row = Instance.new("Frame")
-        row.Name = "Row"
+        row.Name = "Plank"
         row.BackgroundColor3 = P.Wood
         row.BackgroundTransparency = 1 - theme.rowPlankAlpha
         row.BorderSizePixel = 0

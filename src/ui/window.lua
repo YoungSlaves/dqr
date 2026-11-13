@@ -19,6 +19,7 @@ return function(context)
     local players = context.getService("Players")
 
     local version = tostring(context.SCRIPT_VERSION or "?")
+    local versionTag = version:match("^[vV]") and version or ("v" .. version)
     local WINDOW_FILE = "HarvardLabs/configs/menu_window.json"
 
     local TABS = {
@@ -143,7 +144,7 @@ return function(context)
         shapes.decorateSign(sign)
 
         -- version chip pinned to the branch's right end, not to the sign
-        local versionChip = shapes.chip(header, "v" .. version, 1)
+        local versionChip = shapes.chip(header, versionTag, 1)
         versionChip.AnchorPoint = Vector2.new(1, 0)
         versionChip.Position = UDim2.new(1, -14, 0, -8)
         versionChip.BackgroundTransparency = 0.2
@@ -772,7 +773,7 @@ return function(context)
             chip.BackgroundTransparency = 0.15
         end
 
-        local buildChip = shapes.chip(footer, "v" .. version, 1)
+        local buildChip = shapes.chip(footer, versionTag, 1)
         buildChip.AnchorPoint = Vector2.new(1, 0.5)
         buildChip.Position = UDim2.new(1, -96, 0.5, 0)
         local saveChip, saveLabel = shapes.chip(footer, "saved", 2)
@@ -855,12 +856,22 @@ return function(context)
             scrolling.BackgroundTransparency = 1
             scrolling.BorderSizePixel = 0
             scrolling.CanvasSize = UDim2.new()
-            scrolling.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            scrolling.AutomaticCanvasSize = Enum.AutomaticSize.None
             scrolling.ScrollingDirection = Enum.ScrollingDirection.Y
             scrolling.Parent = frame
             shapes.scrollbar(scrolling)
             shapes.pad(scrolling, 12, 18, 24, 18)
-            prim.vlist(scrolling, 10)
+            local layout = prim.vlist(scrolling, 10)
+            local function syncCanvas()
+                local contentHeight = layout.AbsoluteContentSize.Y
+                scrolling.CanvasSize = UDim2.fromOffset(
+                    0,
+                    math.max(contentHeight + 36, scrolling.AbsoluteSize.Y)
+                )
+            end
+            layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(syncCanvas)
+            scrolling:GetPropertyChangedSignal("AbsoluteSize"):Connect(syncCanvas)
+            task.defer(syncCanvas)
             return frame, scrolling
         end
 

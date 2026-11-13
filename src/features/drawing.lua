@@ -298,7 +298,8 @@ return function(context)
         local radius = math.clamp(tonumber(config.gridRadius) or 96, step * 2, 300)
         local centerX = math.floor(vector.X / step + 0.5) * step
         local centerZ = math.floor(vector.Z / step + 0.5) * step
-        local floorY = vector.Y - 2.37
+        local groundY = context.floorY and context.floorY(vector.X, vector.Y, vector.Z)
+        local floorY = (groundY or (vector.Y - 2.4)) + 0.02
         local color = config.colorGrid or Color3.fromRGB(74, 81, 72)
         local transparency = tonumber(config.gridTransparency) or 0.72
         local half = math.floor(radius / step)
@@ -434,14 +435,21 @@ return function(context)
         return value
     end
     local function helper15()
-        if sharedValue.orbFolder then
-            if sharedValue.orbFolder.Parent then
-                return sharedValue.orbFolder
+        if not sharedValue.orbFolder or not sharedValue.orbFolder.Parent then
+            sharedValue.orbFolder = Instance.new("Folder")
+            sharedValue.orbFolder.Name = "GroupOrbs"
+            sharedValue.orbFolder.Parent = visualRoot()
+        end
+        if not sharedValue.orbNumbersRemoved then
+            sharedValue.orbNumbersRemoved = true
+            -- Clear plates left by an older build so the NPCs start clean.
+            for _, orb in ipairs(sharedValue.orbFolder:GetChildren()) do
+                local numberPlate = orb:FindFirstChild("num")
+                if numberPlate then
+                    numberPlate:Destroy()
+                end
             end
         end
-        sharedValue.orbFolder = Instance.new("Folder")
-        sharedValue.orbFolder.Name = "GroupOrbs"
-        sharedValue.orbFolder.Parent = visualRoot()
         return sharedValue.orbFolder
     end
     local function helper16()
@@ -763,41 +771,6 @@ return function(context)
                         or value and value.colour
                         or Color3.new(1, 1, 1)
                     groupOrb.CFrame = CFrame.new(entry.root.Position + Vector3.new(0, value4, 0))
-                    if config.groupNumbers ~= false then
-                        local num = groupOrb:FindFirstChild("num")
-                        if not num then
-                            num = Instance.new("BillboardGui")
-                            num.Name = "num"
-                            num.Size = UDim2.fromOffset(80, 26)
-                            num.AlwaysOnTop = true
-                            num.MaxDistance = 300
-                            num.StudsOffsetWorldSpace = Vector3.new(0, 1.6, 0)
-                            num.LightInfluence = 0
-                            local label = Instance.new("TextLabel")
-                            label.Name = "t"
-                            label.Size = UDim2.fromScale(1, 1)
-                            label.BackgroundTransparency = 1
-                            label.TextStrokeTransparency = 0.2
-                            label.TextScaled = true
-                            label.Font = Enum.Font.GothamBold
-                            label.Parent = num
-                            num.Parent = groupOrb
-                        end
-                        local textControl = num:FindFirstChild("t")
-                        if textControl then
-                            local value8, text = value6 and "TAG"
-                            if value8 then
-                                text = value8
-                            else
-                                local toString, value9 = tostring, value and (value.num or value.id)
-                                text = toString(value9 or "?")
-                            end
-                            textControl.Text = text
-                            textControl.TextColor3 = value6 and Color3.fromRGB(166, 183, 154)
-                                or value and value.colour
-                                or Color3.new(1, 1, 1)
-                        end
-                    end
                     value5[entry.model] = true
                 end
             end
@@ -1569,7 +1542,6 @@ return function(context)
         "drawProjected",
         "drawLanding",
         "groupOrbs",
-        "groupNumbers",
         "aoeMarker",
         "ghostDraw",
         "drawFanBeam",

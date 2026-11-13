@@ -875,6 +875,14 @@ return function(Context)
         end
         local Hat = Instance.new("Model")
         Hat.Name = "SwangyChineseHat"
+
+        -- Anchor the hat to the actual top of the head. R6 and R15 heads have
+        -- different heights, so a fixed offset makes the brim float.
+        local headTop = math.max(Head.Size.Y * 0.5, 0.35)
+        local headWidth = math.max(Head.Size.X, Head.Size.Z)
+        local brimY = headTop + 0.02
+        local brimRadius = math.max(headWidth * 0.95 + 0.2, 1.6)
+
         local function Disc(Name, Y, Radius, Height, Color)
             local Part = Instance.new("Part")
             Part.Name = Name
@@ -896,13 +904,13 @@ return function(Context)
             Weld.Parent = Part
             return Part
         end
-        Disc("Brim", 1.15, 2.2, 0.1, Color3.fromRGB(166, 139, 94))
-        Disc("Band", 1.23, 2.04, 0.1, Color3.fromRGB(119, 52, 45))
+        Disc("Brim", brimY, brimRadius, 0.1, Color3.fromRGB(166, 139, 94))
+        Disc("Band", brimY + 0.08, brimRadius * 0.92, 0.1, Color3.fromRGB(119, 52, 45))
         for Index = 1, 7, 1 do
-            local Radius = 1.85 - (Index - 1) * 0.22
+            local Radius = brimRadius * (0.84 - (Index - 1) * 0.1)
             Disc(
                 "Cone" .. tostring(Index),
-                1.3 + (Index - 1) * 0.14,
+                brimY + 0.14 + (Index - 1) * 0.14,
                 math.max(Radius, 0.3),
                 0.14,
                 Index % 2 == 0 and Color3.fromRGB(188, 160, 108) or Color3.fromRGB(156, 130, 88)

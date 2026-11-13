@@ -255,7 +255,6 @@ return function(context)
         swingMageFrom = 70,
         mageEscapePullWeight = 14,
         mageEscapeFrom = 40,
-        groupNumbers = true,
         aoeOnTargetTol = 4,
         walkInFrom = 35,
         orbLineClear = 24,

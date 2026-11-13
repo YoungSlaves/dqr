@@ -1909,7 +1909,7 @@ return function(context)
         -- fireflies pause with the window; resume only when it is shown
         shapes.pauseFireflies(true)
         if signLabel then
-            signLabel.Text = "Swangy"
+            signLabel.Text = "SWANGY"
         end
         return shell
     end

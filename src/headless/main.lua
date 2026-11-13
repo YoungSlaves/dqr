@@ -364,6 +364,196 @@ return function(Context)
     local SpoofFakes = {}
     local SpoofAssets = {}
 
+    -- ------------------------------------------------------------------ look
+    -- Shared skin for the control rail, stats strip, spoofer and blackout.
+    -- Tokens come from ui/theme.lua (palette, button states, hud metrics, fonts).
+    -- The fallback only keeps this file working if the theme has not run yet.
+    local TweenService = game:GetService("TweenService")
+    local Theme = Context.Theme
+    local Look
+    do
+        if Theme and Theme.palette and Theme.states and Theme.hud then
+            Look = {
+                palette = Theme.palette,
+                states = Theme.states,
+                radius = Theme.hud.radius,
+                size = Theme.hud.size,
+                quick = Theme.hud.quick,
+                press = Theme.hud.press,
+            }
+        else
+            local function Hex(Value)
+                return Color3.fromHex(Value)
+            end
+            local P = {
+                DeepForest = Hex("0d1210"),
+                Moss = Hex("17211b"),
+                Fern = Hex("748b71"),
+                LeafLight = Hex("a6b79a"),
+                Bark = Hex("4a3d31"),
+                Wood = Hex("26221c"),
+                Parchment = Hex("e7dfcb"),
+                Firefly = Hex("c7ad76"),
+                Hot = Hex("a35f52"),
+                Muted = Hex("8d897b"),
+            }
+            local function Tone(Color, Text, Amount)
+                return {
+                    fill = Color:Lerp(P.DeepForest, Amount),
+                    hover = Color:Lerp(P.DeepForest, Amount - 0.12),
+                    text = Text,
+                    line = Color:Lerp(P.DeepForest, 0.4),
+                    dot = Color,
+                }
+            end
+            Look = {
+                palette = P,
+                states = {
+                    off = {
+                        fill = P.Moss,
+                        hover = P.Moss:Lerp(P.Bark, 0.45),
+                        text = P.Muted,
+                        line = P.Bark,
+                        dot = P.Muted:Lerp(P.DeepForest, 0.45),
+                    },
+                    leaf = Tone(P.Fern, P.LeafLight, 0.72),
+                    warm = Tone(P.Firefly, P.Firefly, 0.8),
+                    ember = Tone(P.Hot, P.Hot:Lerp(P.Parchment, 0.4), 0.72),
+                    parch = Tone(P.Parchment, P.Parchment, 0.88),
+                    reset = {
+                        fill = P.Moss,
+                        hover = P.Moss:Lerp(P.Hot, 0.2),
+                        text = P.Hot:Lerp(P.Parchment, 0.3),
+                        line = P.Hot:Lerp(P.Bark, 0.55),
+                        dot = P.Hot,
+                    },
+                },
+                radius = { panel = 10, button = 6, field = 4, tag = 3, pill = 999 },
+                size = { button = 12, stat = 12, brand = 14, title = 15, field = 12, caption = 11 },
+                quick = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                press = TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+            }
+        end
+    end
+
+    local function Face(Object, Role)
+        if Theme and Theme.applyFont then
+            Theme.applyFont(Object, Role)
+        else
+            Object.Font = Role == "ledger" and Enum.Font.Garamond or Enum.Font.SourceSans
+        end
+    end
+
+    local function Round(Object, Radius)
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, Radius)
+        Corner.Parent = Object
+        return Corner
+    end
+
+    -- Border mode is explicit: on a TextButton the default mode outlines the
+    -- text instead of the box.
+    local function Outline(Object, Color, Transparency)
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = Color
+        Stroke.Thickness = 1
+        Stroke.Transparency = Transparency or 0
+        Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        Stroke.Parent = Object
+        return Stroke
+    end
+
+    local function Inset(Object, Top, Right, Bottom, Left)
+        local Padding = Instance.new("UIPadding")
+        Padding.PaddingTop = UDim.new(0, Top)
+        Padding.PaddingRight = UDim.new(0, Right)
+        Padding.PaddingBottom = UDim.new(0, Bottom)
+        Padding.PaddingLeft = UDim.new(0, Left)
+        Padding.Parent = Object
+        return Padding
+    end
+
+    local function Paint(Button, Instant)
+        if not (Button and Button.Parent) then
+            return
+        end
+        local State = Look.states[Button:GetAttribute("State") or "off"] or Look.states.off
+        local Fill = Button:GetAttribute("Hover") == true and State.hover or State.fill
+        local Stroke = Button:FindFirstChildOfClass("UIStroke")
+        local Dot = Button:FindFirstChild("Dot")
+        if Instant then
+            Button.BackgroundColor3 = Fill
+            Button.TextColor3 = State.text
+        else
+            TweenService:Create(Button, Look.quick, { BackgroundColor3 = Fill, TextColor3 = State.text }):Play()
+        end
+        if Stroke then
+            Stroke.Color = State.line
+        end
+        if Dot then
+            Dot.BackgroundColor3 = State.dot
+        end
+    end
+
+    local function SetButtonState(Button, StateName)
+        if not (Button and Button.Parent) then
+            return
+        end
+        Button:SetAttribute("State", StateName)
+        Paint(Button)
+    end
+
+    -- One button for the rail and the spoofer. The dot is the on/off lamp, so
+    -- state never depends on colour alone.
+    local function MakeButton(Parent, Name, Text, Order, StateName, HasDot)
+        local Button = Instance.new("TextButton")
+        Button.Name = Name
+        Button.LayoutOrder = Order
+        Button.AutomaticSize = Enum.AutomaticSize.X
+        Button.Size = UDim2.new(0, 0, 1, 0)
+        Button.BorderSizePixel = 0
+        Button.Text = Text
+        Button.TextSize = Look.size.button
+        Button.TextWrapped = false
+        Button.Active = true
+        Button.AutoButtonColor = false
+        Face(Button, "hud")
+        Round(Button, Look.radius.button)
+        Outline(Button, Look.states.off.line)
+        Inset(Button, 0, 11, 0, HasDot and 23 or 11)
+        local Scale = Instance.new("UIScale")
+        Scale.Parent = Button
+        if HasDot then
+            local Dot = Instance.new("Frame")
+            Dot.Name = "Dot"
+            Dot.AnchorPoint = Vector2.new(0, 0.5)
+            Dot.Position = UDim2.new(0, -14, 0.5, 0)
+            Dot.Size = UDim2.fromOffset(6, 6)
+            Dot.BorderSizePixel = 0
+            Round(Dot, Look.radius.pill)
+            Dot.Parent = Button
+        end
+        Button:SetAttribute("State", StateName)
+        Button.Parent = Parent
+        Paint(Button, true)
+        Button.MouseEnter:Connect(function()
+            Button:SetAttribute("Hover", true)
+            Paint(Button)
+        end)
+        Button.MouseLeave:Connect(function()
+            Button:SetAttribute("Hover", false)
+            Paint(Button)
+            TweenService:Create(Scale, Look.press, { Scale = 1 }):Play()
+        end)
+        Button.MouseButton1Down:Connect(function()
+            TweenService:Create(Scale, Look.press, { Scale = 0.95 }):Play()
+        end)
+        Button.MouseButton1Up:Connect(function()
+            TweenService:Create(Scale, Look.press, { Scale = 1 }):Play()
+        end)
+        return Button
+    end
+
     local function SaveAutomation()
         if Context.saveSwangyConfig then
             pcall(Context.saveSwangyConfig)
@@ -683,17 +873,11 @@ return function(Context)
     local function UpdateSpoofButton()
         local Enabled = SpoofSettings().Enabled == true
         if SpoofButton and SpoofButton.Parent then
-            SpoofButton.BackgroundColor3 = Enabled and Color3.fromRGB(45, 37, 56)
-                or Color3.fromRGB(31, 33, 39)
-            SpoofButton.TextColor3 = Enabled and Color3.fromRGB(222, 190, 255)
-                or Color3.fromRGB(177, 184, 195)
+            SetButtonState(SpoofButton, Enabled and "parch" or "off")
         end
         if SpoofToggle and SpoofToggle.Parent then
-            SpoofToggle.Text = Enabled and "SPOOF ON" or "SPOOF OFF"
-            SpoofToggle.BackgroundColor3 = Enabled and Color3.fromRGB(45, 37, 56)
-                or Color3.fromRGB(31, 33, 39)
-            SpoofToggle.TextColor3 = Enabled and Color3.fromRGB(222, 190, 255)
-                or Color3.fromRGB(177, 184, 195)
+            SpoofToggle.Text = Enabled and "Spoof on" or "Spoof off"
+            SetButtonState(SpoofToggle, Enabled and "parch" or "off")
         end
     end
 
@@ -715,47 +899,63 @@ return function(Context)
         SpoofGui.Enabled = false
         SpoofGui.Parent = PlayerGui
 
+        local Palette = Look.palette
+
         SpoofPanel = Instance.new("Frame")
         SpoofPanel.Name = "Panel"
         SpoofPanel.AnchorPoint = Vector2.new(0.5, 0.5)
         SpoofPanel.Position = UDim2.fromScale(0.5, 0.5)
-        SpoofPanel.Size = UDim2.fromOffset(380, 322)
-        SpoofPanel.BackgroundColor3 = Color3.fromRGB(16, 17, 22)
-        SpoofPanel.BackgroundTransparency = 0.04
+        SpoofPanel.Size = UDim2.fromOffset(380, 330)
+        SpoofPanel.BackgroundColor3 = Palette.Wood
+        SpoofPanel.BackgroundTransparency = 0.03
         SpoofPanel.BorderSizePixel = 0
         SpoofPanel.Active = true
         SpoofPanel.Parent = SpoofGui
-        local Corner = Instance.new("UICorner")
-        Corner.CornerRadius = UDim.new(0, 10)
-        Corner.Parent = SpoofPanel
-        local Stroke = Instance.new("UIStroke")
-        Stroke.Color = Color3.fromRGB(64, 67, 79)
-        Stroke.Thickness = 1
-        Stroke.Transparency = 0.25
-        Stroke.Parent = SpoofPanel
+        Round(SpoofPanel, Look.radius.panel + 2)
+        Outline(SpoofPanel, Palette.Bark)
 
         local Title = Instance.new("TextLabel")
         Title.BackgroundTransparency = 1
-        Title.Position = UDim2.fromOffset(16, 10)
-        Title.Size = UDim2.new(1, -60, 0, 20)
-        Title.Text = "LOCAL SPOOFER"
-        Title.TextColor3 = Color3.fromRGB(255, 111, 170)
-        Title.TextSize = 12
-        Title.Font = Enum.Font.GothamBold
+        Title.Position = UDim2.fromOffset(16, 9)
+        Title.Size = UDim2.new(1, -60, 0, 24)
+        Title.Text = "Local spoofer"
+        Title.TextColor3 = Palette.Parchment
+        Title.TextSize = Look.size.title
+        Face(Title, "ledger")
         Title.TextXAlignment = Enum.TextXAlignment.Left
         Title.Parent = SpoofPanel
+
+        local Divider = Instance.new("Frame")
+        Divider.Name = "Divider"
+        Divider.Position = UDim2.fromOffset(16, 40)
+        Divider.Size = UDim2.new(1, -32, 0, 1)
+        Divider.BackgroundColor3 = Palette.Bark
+        Divider.BorderSizePixel = 0
+        Divider.Parent = SpoofPanel
 
         local Close = Instance.new("TextButton")
         Close.Name = "Close"
         Close.AnchorPoint = Vector2.new(1, 0)
-        Close.Position = UDim2.new(1, -10, 0, 6)
+        Close.Position = UDim2.new(1, -10, 0, 9)
         Close.Size = UDim2.fromOffset(24, 24)
+        Close.BackgroundColor3 = Palette.Moss
         Close.BackgroundTransparency = 1
+        Close.BorderSizePixel = 0
+        Close.AutoButtonColor = false
         Close.Text = "×"
-        Close.TextColor3 = Color3.fromRGB(177, 184, 195)
-        Close.TextSize = 16
-        Close.Font = Enum.Font.GothamMedium
+        Close.TextColor3 = Palette.Muted
+        Close.TextSize = 18
+        Face(Close, "hud")
         Close.Parent = SpoofPanel
+        Round(Close, Look.radius.pill)
+        Close.MouseEnter:Connect(function()
+            Close.BackgroundTransparency = 0
+            Close.TextColor3 = Palette.Parchment
+        end)
+        Close.MouseLeave:Connect(function()
+            Close.BackgroundTransparency = 1
+            Close.TextColor3 = Palette.Muted
+        end)
         Close.MouseButton1Click:Connect(function()
             if SpoofGui then
                 SpoofGui.Enabled = false
@@ -763,50 +963,50 @@ return function(Context)
         end)
 
         local Rows = {
-            { Key = "Name", Label = "NAME", Placeholder = "Display name" },
-            { Key = "PFP", Label = "PFP", Placeholder = "filename in swangy/images" },
-            { Key = "Level", Label = "LEVEL", Placeholder = "Level" },
-            { Key = "Gold", Label = "GOLD", Placeholder = "Gold amount" },
-            { Key = "Gems", Label = "GEMS", Placeholder = "Gem amount" },
-            { Key = "EXP", Label = "EXP", Placeholder = "EXP display" },
-            { Key = "Health", Label = "HEALTH", Placeholder = "Health display" },
+            { Key = "Name", Label = "Name", Placeholder = "Display name" },
+            { Key = "PFP", Label = "Portrait", Placeholder = "filename in swangy/images" },
+            { Key = "Level", Label = "Level", Placeholder = "Level" },
+            { Key = "Gold", Label = "Gold", Placeholder = "Gold amount" },
+            { Key = "Gems", Label = "Gems", Placeholder = "Gem amount" },
+            { Key = "EXP", Label = "XP", Placeholder = "EXP display" },
+            { Key = "Health", Label = "Health", Placeholder = "Health display" },
         }
         SpoofFields = {}
         for Index, Row in ipairs(Rows) do
-            local Y = 38 + (Index - 1) * 32
+            local Y = 52 + (Index - 1) * 32
             local Label = Instance.new("TextLabel")
             Label.BackgroundTransparency = 1
             Label.Position = UDim2.fromOffset(16, Y)
             Label.Size = UDim2.fromOffset(64, 24)
             Label.Text = Row.Label
-            Label.TextColor3 = Color3.fromRGB(126, 134, 148)
-            Label.TextSize = 9
-            Label.Font = Enum.Font.GothamBold
+            Label.TextColor3 = Palette.Muted
+            Label.TextSize = Look.size.button
+            Face(Label, "hud")
             Label.TextXAlignment = Enum.TextXAlignment.Left
             Label.Parent = SpoofPanel
             local Box = Instance.new("TextBox")
             Box.Name = Row.Key
             Box.Position = UDim2.fromOffset(88, Y)
             Box.Size = UDim2.fromOffset(276, 24)
-            Box.BackgroundColor3 = Color3.fromRGB(27, 29, 35)
+            Box.BackgroundColor3 = Palette.DeepForest
             Box.BorderSizePixel = 0
             Box.Text = tostring(SpoofSettings()[Row.Key] or "")
             Box.PlaceholderText = Row.Placeholder
-            Box.PlaceholderColor3 = Color3.fromRGB(91, 98, 111)
-            Box.TextColor3 = Color3.fromRGB(238, 243, 249)
-            Box.TextSize = 11
-            Box.Font = Enum.Font.GothamMedium
+            Box.PlaceholderColor3 = Palette.Muted:Lerp(Palette.DeepForest, 0.4)
+            Box.TextColor3 = Palette.Parchment
+            Box.TextSize = Look.size.field
+            Face(Box, "hud")
+            Box.TextXAlignment = Enum.TextXAlignment.Left
             Box.ClearTextOnFocus = false
             Box.Parent = SpoofPanel
-            local BoxCorner = Instance.new("UICorner")
-            BoxCorner.CornerRadius = UDim.new(0, 5)
-            BoxCorner.Parent = Box
-            local BoxStroke = Instance.new("UIStroke")
-            BoxStroke.Color = Color3.fromRGB(58, 62, 73)
-            BoxStroke.Thickness = 1
-            BoxStroke.Transparency = 0.45
-            BoxStroke.Parent = Box
+            Round(Box, Look.radius.field)
+            Inset(Box, 0, 8, 0, 8)
+            local BoxStroke = Outline(Box, Palette.Bark)
+            Box.Focused:Connect(function()
+                BoxStroke.Color = Palette.Firefly
+            end)
             Box.FocusLost:Connect(function()
+                BoxStroke.Color = Palette.Bark
                 SpoofSettings()[Row.Key] = Box.Text
                 SaveAutomation()
                 ApplySpoof()
@@ -814,23 +1014,10 @@ return function(Context)
             SpoofFields[Row.Key] = Box
         end
 
-        SpoofToggle = Instance.new("TextButton")
-        SpoofToggle.Name = "Enabled"
-        SpoofToggle.Position = UDim2.fromOffset(16, 278)
-        SpoofToggle.Size = UDim2.fromOffset(120, 28)
-        SpoofToggle.BorderSizePixel = 0
-        SpoofToggle.Text = "SPOOF OFF"
-        SpoofToggle.TextSize = 10
-        SpoofToggle.Font = Enum.Font.GothamBold
-        SpoofToggle.Parent = SpoofPanel
-        local ToggleCorner = Instance.new("UICorner")
-        ToggleCorner.CornerRadius = UDim.new(0, 6)
-        ToggleCorner.Parent = SpoofToggle
-        local ToggleStroke = Instance.new("UIStroke")
-        ToggleStroke.Color = Color3.fromRGB(65, 69, 80)
-        ToggleStroke.Thickness = 1
-        ToggleStroke.Transparency = 0.55
-        ToggleStroke.Parent = SpoofToggle
+        SpoofToggle = MakeButton(SpoofPanel, "Enabled", "Spoof off", 0, "off", true)
+        SpoofToggle.AutomaticSize = Enum.AutomaticSize.None
+        SpoofToggle.Position = UDim2.fromOffset(16, 286)
+        SpoofToggle.Size = UDim2.fromOffset(120, 30)
         SpoofToggle.MouseButton1Click:Connect(function()
             local Data = SpoofSettings()
             Data.Enabled = not (Data.Enabled == true)
@@ -838,6 +1025,20 @@ return function(Context)
             UpdateSpoofButton()
             ApplySpoof()
         end)
+
+        local Hint = Instance.new("TextLabel")
+        Hint.Name = "Hint"
+        Hint.BackgroundTransparency = 1
+        Hint.Position = UDim2.fromOffset(150, 286)
+        Hint.Size = UDim2.fromOffset(214, 30)
+        Hint.Text = "Changes apply when you leave a field."
+        Hint.TextColor3 = Palette.Muted
+        Hint.TextSize = Look.size.caption
+        Hint.TextWrapped = true
+        Hint.TextXAlignment = Enum.TextXAlignment.Left
+        Face(Hint, "hud")
+        Hint.Parent = SpoofPanel
+
         UpdateSpoofButton()
         Context.spoofGui = SpoofGui
     end
@@ -987,10 +1188,7 @@ return function(Context)
         Global.SwangyManualOff = not Enabled
         if PowerButton and PowerButton.Parent then
             PowerButton.Text = Enabled and "ON" or "OFF"
-            PowerButton.BackgroundColor3 = Enabled and Color3.fromRGB(27, 63, 53)
-                or Color3.fromRGB(31, 33, 39)
-            PowerButton.TextColor3 = Enabled and Color3.fromRGB(145, 235, 195)
-                or Color3.fromRGB(177, 184, 195)
+            SetButtonState(PowerButton, Enabled and "leaf" or "off")
         end
         if Save and Context.saveSwangyConfig then
             pcall(Context.saveSwangyConfig)
@@ -1002,11 +1200,8 @@ return function(Context)
             return
         end
         local Enabled = CFG.performanceMode ~= false
-        PerfButton.Text = "PERFORMANCE"
-        PerfButton.BackgroundColor3 = Enabled and Color3.fromRGB(48, 39, 63)
-            or Color3.fromRGB(31, 33, 39)
-        PerfButton.TextColor3 = Enabled and Color3.fromRGB(207, 177, 255)
-            or Color3.fromRGB(177, 184, 195)
+        PerfButton.Text = "Performance"
+        SetButtonState(PerfButton, Enabled and "warm" or "off")
     end
 
     local function SetPerformance(Enabled, Save)
@@ -1038,12 +1233,57 @@ return function(Context)
         BlackGui.Enabled = RT.BlackScreen == true
         local Shade = Instance.new("Frame")
         Shade.Name = "Shade"
-        Shade.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        Shade.BackgroundColor3 = Look.palette.DeepForest
         Shade.BackgroundTransparency = 0
         Shade.BorderSizePixel = 0
         Shade.Active = false
         Shade.Size = UDim2.fromScale(1, 1)
         Shade.Parent = BlackGui
+
+        -- A quiet note in the corner so a dark screen reads as "paused", not
+        -- "crashed". It never takes input.
+        local Note = Instance.new("Frame")
+        Note.Name = "Note"
+        Note.AnchorPoint = Vector2.new(0, 1)
+        Note.Position = UDim2.new(0, 28, 1, -28)
+        Note.Size = UDim2.fromOffset(340, 0)
+        Note.AutomaticSize = Enum.AutomaticSize.Y
+        Note.BackgroundTransparency = 1
+        Note.Active = false
+        Note.Parent = Shade
+        local NoteLayout = Instance.new("UIListLayout")
+        NoteLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        NoteLayout.Padding = UDim.new(0, 4)
+        NoteLayout.Parent = Note
+
+        local Heading = Instance.new("TextLabel")
+        Heading.Name = "Heading"
+        Heading.LayoutOrder = 1
+        Heading.BackgroundTransparency = 1
+        Heading.AutomaticSize = Enum.AutomaticSize.Y
+        Heading.Size = UDim2.new(1, 0, 0, 0)
+        Heading.Text = "3D view is off"
+        Heading.TextColor3 = Look.palette.Parchment:Lerp(Look.palette.DeepForest, 0.35)
+        Heading.TextSize = 18
+        Heading.TextWrapped = true
+        Heading.TextXAlignment = Enum.TextXAlignment.Left
+        Face(Heading, "ledger")
+        Heading.Parent = Note
+
+        local Detail = Instance.new("TextLabel")
+        Detail.Name = "Detail"
+        Detail.LayoutOrder = 2
+        Detail.BackgroundTransparency = 1
+        Detail.AutomaticSize = Enum.AutomaticSize.Y
+        Detail.Size = UDim2.new(1, 0, 0, 0)
+        Detail.Text = "Rendering is paused to save GPU. Switch GPU rendering back on from the control bar."
+        Detail.TextColor3 = Look.palette.Muted:Lerp(Look.palette.DeepForest, 0.3)
+        Detail.TextSize = 13
+        Detail.TextWrapped = true
+        Detail.TextXAlignment = Enum.TextXAlignment.Left
+        Face(Detail, "hud")
+        Detail.Parent = Note
+
         BlackGui.Parent = PlayerGui
         Context.blackGui = BlackGui
     end
@@ -1053,11 +1293,8 @@ return function(Context)
             return
         end
         local Enabled = RT.BlackScreen == true
-        BlackButton.Text = "GPU RENDERING"
-        BlackButton.BackgroundColor3 = Enabled and Color3.fromRGB(47, 38, 48)
-            or Color3.fromRGB(31, 33, 39)
-        BlackButton.TextColor3 = Enabled and Color3.fromRGB(247, 202, 215)
-            or Color3.fromRGB(177, 184, 195)
+        BlackButton.Text = "GPU rendering"
+        SetButtonState(BlackButton, Enabled and "ember" or "off")
     end
 
     local function SetBlackScreen(Enabled, Save)
@@ -1105,6 +1342,8 @@ return function(Context)
         ToggleGui.DisplayOrder = 9002
         ToggleGui.Parent = PlayerGui
 
+        local Palette = Look.palette
+
         local Rail = Instance.new("Frame")
         Rail.Name = "Controls"
         Rail.AnchorPoint = Vector2.new(1, 0)
@@ -1115,73 +1354,51 @@ return function(Context)
             Rail.AnchorPoint = Vector2.new(0, 0)
             Rail.Position = UDim2.fromOffset(SavedPosition.X, SavedPosition.Y)
         end
-        Rail.Size = UDim2.fromOffset(452, 34)
-        Rail.BackgroundColor3 = Color3.fromRGB(16, 17, 22)
-        Rail.BackgroundTransparency = 0.08
+        Rail.AutomaticSize = Enum.AutomaticSize.X
+        Rail.Size = UDim2.fromOffset(0, 40)
+        Rail.BackgroundColor3 = Palette.Wood
+        Rail.BackgroundTransparency = 0.06
         Rail.BorderSizePixel = 0
         Rail.Parent = ToggleGui
-        local RailCorner = Instance.new("UICorner")
-        RailCorner.CornerRadius = UDim.new(0, 9)
-        RailCorner.Parent = Rail
-        local RailStroke = Instance.new("UIStroke")
-        RailStroke.Color = Color3.fromRGB(56, 59, 70)
-        RailStroke.Thickness = 1
-        RailStroke.Transparency = 0.35
-        RailStroke.Parent = Rail
+        Round(Rail, Look.radius.panel)
+        Outline(Rail, Palette.Bark)
         local Layout = Instance.new("UIListLayout")
         Layout.FillDirection = Enum.FillDirection.Horizontal
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 4)
+        Layout.Padding = UDim.new(0, 5)
         Layout.SortOrder = Enum.SortOrder.LayoutOrder
         Layout.Parent = Rail
-        local RailPadding = Instance.new("UIPadding")
-        RailPadding.PaddingLeft = UDim.new(0, 4)
-        RailPadding.PaddingRight = UDim.new(0, 4)
-        RailPadding.PaddingTop = UDim.new(0, 3)
-        RailPadding.PaddingBottom = UDim.new(0, 3)
-        RailPadding.Parent = Rail
+        Inset(Rail, 5, 5, 5, 4)
 
-        local function NewButton(Name, Text, Width, Order)
-            local Button = Instance.new("TextButton")
-            Button.Name = Name
-            Button.LayoutOrder = Order
-            Button.Size = UDim2.new(0, Width, 1, 0)
-            Button.BackgroundColor3 = Color3.fromRGB(31, 33, 39)
-            Button.BorderSizePixel = 0
-            Button.Text = Text
-            Button.TextColor3 = Color3.fromRGB(180, 187, 198)
-            Button.TextSize = 10
-            Button.Font = Enum.Font.GothamBold
-            Button.TextWrapped = false
-            Button.TextTruncate = Enum.TextTruncate.AtEnd
-            Button.Active = true
-            Button.AutoButtonColor = false
-            Button.Parent = Rail
-            local Corner = Instance.new("UICorner")
-            Corner.CornerRadius = UDim.new(0, 6)
-            Corner.Parent = Button
-            local Stroke = Instance.new("UIStroke")
-            Stroke.Color = Color3.fromRGB(65, 69, 80)
-            Stroke.Thickness = 1
-            Stroke.Transparency = 0.55
-            Stroke.Parent = Button
-            return Button
-        end
-
-        local Grip = NewButton("Grip", "⋮", 12, 0)
+        -- Drag handle: a 2x3 block of studs instead of a text glyph.
+        local Grip = Instance.new("TextButton")
+        Grip.Name = "Grip"
+        Grip.LayoutOrder = 0
+        Grip.Size = UDim2.new(0, 16, 1, 0)
         Grip.BackgroundTransparency = 1
-        Grip.TextColor3 = Color3.fromRGB(118, 124, 138)
-        Grip.TextSize = 14
-        local GripStroke = Grip:FindFirstChildOfClass("UIStroke")
-        if GripStroke then
-            GripStroke.Transparency = 1
+        Grip.BorderSizePixel = 0
+        Grip.Text = ""
+        Grip.Active = true
+        Grip.AutoButtonColor = false
+        Grip.Parent = Rail
+        for Column = -1, 1, 2 do
+            for Row = -1, 1 do
+                local Stud = Instance.new("Frame")
+                Stud.AnchorPoint = Vector2.new(0.5, 0.5)
+                Stud.Position = UDim2.new(0.5, Column * 3, 0.5, Row * 6)
+                Stud.Size = UDim2.fromOffset(3, 3)
+                Stud.BackgroundColor3 = Palette.Bark:Lerp(Palette.Muted, 0.45)
+                Stud.BorderSizePixel = 0
+                Round(Stud, Look.radius.pill)
+                Stud.Parent = Grip
+            end
         end
-        PowerButton = NewButton("Power", "ON", 56, 1)
-        PerfButton = NewButton("Performance", "PERFORMANCE", 104, 2)
-        BlackButton = NewButton("GPU", "GPU RENDERING", 104, 3)
-        SpoofButton = NewButton("Spoof", "SPOOF", 60, 4)
-        ResetButton = NewButton("ResetStats", "RESET STATS", 88, 5)
-        ResetButton.TextColor3 = Color3.fromRGB(238, 155, 170)
+
+        PowerButton = MakeButton(Rail, "Power", "ON", 1, "off", true)
+        PerfButton = MakeButton(Rail, "Performance", "Performance", 2, "off", true)
+        BlackButton = MakeButton(Rail, "GPU", "GPU rendering", 3, "off", true)
+        SpoofButton = MakeButton(Rail, "Spoof", "Spoof", 4, "off", true)
+        ResetButton = MakeButton(Rail, "ResetStats", "Reset stats", 5, "reset", false)
         ToggleButton = PowerButton
 
         local ArmedAt = os.clock() + 0.5
@@ -1219,10 +1436,7 @@ return function(Context)
         AddDrag(Grip, Rail, "ControlPosition", Context.toggleDragConnections)
         SetPerformance(CFG.performanceMode ~= false, false)
         PowerButton.Text = Context.headlessEnabled and "ON" or "OFF"
-        PowerButton.BackgroundColor3 = Context.headlessEnabled and Color3.fromRGB(27, 63, 53)
-            or Color3.fromRGB(31, 33, 39)
-        PowerButton.TextColor3 = Context.headlessEnabled and Color3.fromRGB(145, 235, 195)
-            or Color3.fromRGB(177, 184, 195)
+        SetButtonState(PowerButton, Context.headlessEnabled and "leaf" or "off")
         UpdateBlackButton()
         UpdateSpoofButton()
         Context.toggleGui = ToggleGui
@@ -1260,6 +1474,8 @@ return function(Context)
         HudGui.DisplayOrder = 9001
         HudGui.Parent = PlayerGui
 
+        local Palette = Look.palette
+
         HudPanel = Instance.new("Frame")
         HudPanel.Name = "Stats"
         HudPanel.AnchorPoint = Vector2.new(1, 0)
@@ -1269,78 +1485,105 @@ return function(Context)
             HudPanel.AnchorPoint = Vector2.new(0, 0)
             HudPanel.Position = UDim2.fromOffset(SavedPosition.X, SavedPosition.Y)
         end
-        HudPanel.Size = UDim2.fromOffset(620, 34)
-        HudPanel.BackgroundColor3 = Color3.fromRGB(16, 17, 22)
-        HudPanel.BackgroundTransparency = 0.08
+        HudPanel.AutomaticSize = Enum.AutomaticSize.X
+        HudPanel.Size = UDim2.fromOffset(0, 36)
+        HudPanel.BackgroundColor3 = Palette.Wood
+        HudPanel.BackgroundTransparency = 0.06
         HudPanel.BorderSizePixel = 0
         HudPanel.Active = true
         HudPanel.Parent = HudGui
-        local Corner = Instance.new("UICorner")
-        Corner.CornerRadius = UDim.new(0, 9)
-        Corner.Parent = HudPanel
-        local Stroke = Instance.new("UIStroke")
-        Stroke.Color = Color3.fromRGB(56, 59, 70)
-        Stroke.Thickness = 1
-        Stroke.Transparency = 0.35
-        Stroke.Parent = HudPanel
+        Round(HudPanel, Look.radius.panel)
+        Outline(HudPanel, Palette.Bark)
 
         local Layout = Instance.new("UIListLayout")
         Layout.FillDirection = Enum.FillDirection.Horizontal
         Layout.VerticalAlignment = Enum.VerticalAlignment.Center
-        Layout.Padding = UDim.new(0, 8)
+        Layout.Padding = UDim.new(0, 10)
         Layout.SortOrder = Enum.SortOrder.LayoutOrder
         Layout.Parent = HudPanel
-        local Padding = Instance.new("UIPadding")
-        Padding.PaddingLeft = UDim.new(0, 10)
-        Padding.PaddingRight = UDim.new(0, 10)
-        Padding.PaddingTop = UDim.new(0, 4)
-        Padding.PaddingBottom = UDim.new(0, 4)
-        Padding.Parent = HudPanel
+        Inset(HudPanel, 4, 12, 4, 12)
 
+        -- Name tag, set a couple of degrees off level like a hung sign.
         local Brand = Instance.new("TextLabel")
         Brand.Name = "Brand"
         Brand.BackgroundTransparency = 1
         Brand.AutomaticSize = Enum.AutomaticSize.X
         Brand.Size = UDim2.new(0, 0, 1, 0)
-        Brand.Text = "SWANGY"
-        Brand.TextColor3 = Color3.fromRGB(255, 111, 170)
-        Brand.TextSize = 11
-        Brand.Font = Enum.Font.GothamBold
+        Brand.Text = "Swangy"
+        Brand.TextColor3 = Palette.Firefly
+        Brand.TextSize = Look.size.brand
+        Brand.Rotation = -2
+        Face(Brand, "ledger")
         Brand.TextXAlignment = Enum.TextXAlignment.Left
         Brand.LayoutOrder = 1
         Brand.Parent = HudPanel
 
+        local LiveState = Look.states.leaf
         local Badge = Instance.new("Frame")
         Badge.Name = "Badge"
-        Badge.Size = UDim2.fromOffset(32, 18)
-        Badge.BackgroundColor3 = Color3.fromRGB(50, 38, 66)
+        Badge.AutomaticSize = Enum.AutomaticSize.X
+        Badge.Size = UDim2.fromOffset(0, 20)
+        Badge.BackgroundColor3 = LiveState.fill
         Badge.BorderSizePixel = 0
         Badge.LayoutOrder = 2
         Badge.Parent = HudPanel
-        local BadgeCorner = Instance.new("UICorner")
-        BadgeCorner.CornerRadius = UDim.new(0, 5)
-        BadgeCorner.Parent = Badge
+        Round(Badge, Look.radius.pill)
+        Outline(Badge, LiveState.line)
+        local BadgeLayout = Instance.new("UIListLayout")
+        BadgeLayout.FillDirection = Enum.FillDirection.Horizontal
+        BadgeLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        BadgeLayout.Padding = UDim.new(0, 5)
+        BadgeLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        BadgeLayout.Parent = Badge
+        Inset(Badge, 0, 9, 0, 8)
+        local BadgeDot = Instance.new("Frame")
+        BadgeDot.Name = "Dot"
+        BadgeDot.LayoutOrder = 1
+        BadgeDot.Size = UDim2.fromOffset(5, 5)
+        BadgeDot.BackgroundColor3 = LiveState.dot
+        BadgeDot.BorderSizePixel = 0
+        Round(BadgeDot, Look.radius.pill)
+        BadgeDot.Parent = Badge
         local BadgeText = Instance.new("TextLabel")
         BadgeText.BackgroundTransparency = 1
-        BadgeText.Size = UDim2.fromScale(1, 1)
-        BadgeText.Text = "LIVE"
-        BadgeText.TextColor3 = Color3.fromRGB(207, 177, 255)
-        BadgeText.TextSize = 8
-        BadgeText.Font = Enum.Font.GothamBold
+        BadgeText.AutomaticSize = Enum.AutomaticSize.X
+        BadgeText.Size = UDim2.new(0, 0, 1, 0)
+        BadgeText.LayoutOrder = 2
+        BadgeText.Text = "live"
+        BadgeText.TextColor3 = LiveState.text
+        BadgeText.TextSize = Look.size.caption
+        Face(BadgeText, "hud")
         BadgeText.Parent = Badge
 
         local function AddSeparator(Order)
-            local Separator = Instance.new("TextLabel")
+            local Separator = Instance.new("Frame")
             Separator.Name = "Separator"
-            Separator.BackgroundTransparency = 1
-            Separator.AutomaticSize = Enum.AutomaticSize.X
-            Separator.Size = UDim2.new(0, 0, 1, 0)
-            Separator.Text = "│"
-            Separator.TextColor3 = Color3.fromRGB(64, 69, 80)
-            Separator.TextSize = 11
-            Separator.Font = Enum.Font.GothamMedium
+            Separator.Size = UDim2.fromOffset(1, 14)
+            Separator.BackgroundColor3 = Palette.Bark
+            Separator.BorderSizePixel = 0
             Separator.LayoutOrder = Order
             Separator.Parent = HudPanel
+        end
+
+        -- Labels keep their original keys (Context.hudLabels.RUNS etc.); only
+        -- the text shown to the player changes.
+        local StatTitle = {
+            FPS = "FPS",
+            RUNS = "Runs",
+            DEATHS = "Deaths",
+            KILLS = "Kills",
+            WINS = "Wins",
+            LOSSES = "Losses",
+        }
+        local MutedHex, InkHex = Palette.Muted:ToHex(), Palette.Parchment:ToHex()
+        local GoodHex, BadHex = Palette.LeafLight:ToHex(), Look.states.ember.text:ToHex()
+        local function StatText(Name, Value, Tone)
+            return ('<font color="#%s">%s</font>  <font color="#%s">%s</font>'):format(
+                MutedHex,
+                StatTitle[Name] or Name,
+                Tone or InkHex,
+                tostring(Value)
+            )
         end
 
         HudLabels = { Brand = Brand, Badge = BadgeText }
@@ -1354,10 +1597,10 @@ return function(Context)
             Label.AutomaticSize = Enum.AutomaticSize.X
             Label.Size = UDim2.new(0, 0, 1, 0)
             Label.RichText = true
-            Label.TextColor3 = Color3.fromRGB(242, 245, 250)
-            Label.Text = ("<font color=\"#778191\">%s</font>  <font color=\"#F2F5FA\">0</font>"):format(Name)
-            Label.TextSize = 11
-            Label.Font = Enum.Font.GothamMedium
+            Label.TextColor3 = Palette.Parchment
+            Label.Text = StatText(Name, 0)
+            Label.TextSize = Look.size.stat
+            Face(Label, "hud")
             Label.TextXAlignment = Enum.TextXAlignment.Left
             Label.LayoutOrder = Order
             Label.Parent = HudPanel
@@ -1414,18 +1657,15 @@ return function(Context)
             if not HudLabels then
                 return
             end
-            local function Stat(Name, Value)
-                return ("<font color=\"#778191\">%s</font>  <font color=\"#F2F5FA\">%s</font>"):format(
-                    Name,
-                    tostring(Value)
-                )
+            local function Count(Value)
+                return tonumber(Value) or 0
             end
-            HudLabels.FPS.Text = Stat("FPS", Fps)
-            HudLabels.RUNS.Text = Stat("RUNS", Stats.Runs)
-            HudLabels.DEATHS.Text = Stat("DEATHS", Stats.Deaths)
-            HudLabels.KILLS.Text = Stat("KILLS", Stats.Kills)
-            HudLabels.WINS.Text = Stat("WINS", Stats.Wins)
-            HudLabels.LOSSES.Text = Stat("LOSSES", Stats.Losses)
+            HudLabels.FPS.Text = StatText("FPS", Fps)
+            HudLabels.RUNS.Text = StatText("RUNS", Stats.Runs)
+            HudLabels.DEATHS.Text = StatText("DEATHS", Stats.Deaths, Count(Stats.Deaths) > 0 and BadHex or nil)
+            HudLabels.KILLS.Text = StatText("KILLS", Stats.Kills)
+            HudLabels.WINS.Text = StatText("WINS", Stats.Wins, Count(Stats.Wins) > 0 and GoodHex or nil)
+            HudLabels.LOSSES.Text = StatText("LOSSES", Stats.Losses, Count(Stats.Losses) > 0 and BadHex or nil)
         end
 
         Context.hudConnections = { RenderConnection, CharacterConnection }

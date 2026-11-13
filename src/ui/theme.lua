@@ -141,6 +141,61 @@ return function(context)
     theme.RowH = 38
     theme.HeaderH = 68
 
+    -- ------------------------------------------------------------- hud kit
+    -- Control rail, stats strip, spoofer and lobby buttons.  Every colour is a
+    -- palette colour or a Lerp between two palette colours; no new hexes.
+    local function mix(a, b, t)
+        return a:Lerp(b, t)
+    end
+
+    -- TweenInfo is present in Roblox but absent from the headless font
+    -- harness; keep the theme loadable there without changing runtime values.
+    local QuickTween, PressTween
+    if TweenInfo then
+        QuickTween = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        PressTween = TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    end
+
+    theme.hud = {
+        radius = { panel = 10, button = 6, field = 4, tag = 3, pill = 999 },
+        height = { strip = 36, rail = 40 },
+        size = { button = 12, stat = 12, brand = 14, title = 15, field = 12, caption = 11 },
+        quick = QuickTween,
+        press = PressTween,
+    }
+
+    -- A button is always one of these.  The lamp dot carries on/off as well as
+    -- the colour, so state never rests on hue alone.
+    local function tone(color, text, amount)
+        return {
+            fill = mix(color, P.DeepForest, amount),
+            hover = mix(color, P.DeepForest, amount - 0.12),
+            text = text,
+            line = mix(color, P.DeepForest, 0.4),
+            dot = color,
+        }
+    end
+    theme.states = {
+        off = {
+            fill = P.Moss,
+            hover = mix(P.Moss, P.Bark, 0.45),
+            text = P.Muted,
+            line = P.Bark,
+            dot = mix(P.Muted, P.DeepForest, 0.45),
+        },
+        leaf = tone(P.Fern, P.LeafLight, 0.72), -- running
+        warm = tone(P.Firefly, P.Firefly, 0.8), -- tuning / performance
+        ember = tone(P.Hot, mix(P.Hot, P.Parchment, 0.4), 0.72), -- something is switched off
+        parch = tone(P.Parchment, P.Parchment, 0.88), -- neutral, local-only
+        reset = {
+            fill = P.Moss,
+            hover = mix(P.Moss, P.Hot, 0.2),
+            text = mix(P.Hot, P.Parchment, 0.3),
+            line = mix(P.Hot, P.Bark, 0.55),
+            dot = P.Hot,
+        },
+    }
+
     -- ------------------------------------------------------------ typography
     -- Resolved exactly once, at boot, and cached.  Never per label, never per
     -- frame, never over the network: rbxasset:// is a client-local lookup.
@@ -153,6 +208,16 @@ return function(context)
         body = {
             family = "rbxasset://fonts/families/Gotham.json",
             enumName = "Gotham",
+            substitute = Enum.Font.SourceSans,
+        },
+        -- hud kit: a serif for names and titles, a soft rounded sans for
+        -- buttons and numbers.  Plain enum fonts, so no asset lookup at all.
+        ledger = {
+            enumName = "Merriweather",
+            substitute = Enum.Font.Garamond,
+        },
+        hud = {
+            enumName = "Nunito",
             substitute = Enum.Font.SourceSans,
         },
     }
@@ -203,6 +268,10 @@ return function(context)
                 .. tostring(resolved.title.path)
                 .. " body="
                 .. tostring(resolved.body.path)
+                .. " ledger="
+                .. tostring(resolved.ledger.path)
+                .. " hud="
+                .. tostring(resolved.hud.path)
         )
     end
 

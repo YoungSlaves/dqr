@@ -544,6 +544,53 @@ return function(context)
         end
         return "Easy"
     end
+    -- Shared look for the two Gilded Skies buttons (palette comes from ui/theme.lua).
+    local function lobbySkin()
+        local theme = context.Theme
+        local P = theme and theme.palette
+        if not P then
+            local function hex(v)
+                return Color3.fromHex(v)
+            end
+            P = {
+                DeepForest = hex("0d1210"),
+                Moss = hex("17211b"),
+                Fern = hex("748b71"),
+                LeafLight = hex("a6b79a"),
+                Bark = hex("4a3d31"),
+                Muted = hex("8d897b"),
+            }
+        end
+        local function style(button, primary)
+            local fill = primary and P.Fern:Lerp(P.DeepForest, 0.72) or P.Moss
+            local hover = primary and P.Fern:Lerp(P.DeepForest, 0.58) or P.Moss:Lerp(P.Bark, 0.45)
+            button.BackgroundColor3 = fill
+            button.TextColor3 = primary and P.LeafLight or P.Muted
+            button.TextSize = 13
+            button.AutoButtonColor = false
+            if theme and theme.applyFont then
+                theme.applyFont(button, "hud")
+            else
+                button.Font = Enum.Font.SourceSans
+            end
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 6)
+            corner.Parent = button
+            local stroke = Instance.new("UIStroke")
+            stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            stroke.Color = primary and P.Fern:Lerp(P.DeepForest, 0.35) or P.Bark
+            stroke.Thickness = 1
+            stroke.Parent = button
+            button.MouseEnter:Connect(function()
+                button.BackgroundColor3 = hover
+            end)
+            button.MouseLeave:Connect(function()
+                button.BackgroundColor3 = fill
+            end)
+        end
+        return style
+    end
+
     context.gsLobbyButton = function()
         local parent = localPlayer:FindFirstChildOfClass("PlayerGui")
         if not parent then
@@ -561,15 +608,9 @@ return function(context)
         local parent2 = Instance.new("TextButton")
         parent2.AnchorPoint, parent2.Position, parent2.Size =
             Vector2.new(0.5, 0), UDim2.new(0.5, 0, 0, 8), UDim2.fromOffset(200, 34)
-        parent2.BackgroundColor3 = Color3.fromRGB(46, 140, 72)
         parent2.BorderSizePixel = 0
-        parent2.AutoButtonColor = true
-        parent2.Text, parent2.TextColor3, parent2.Font =
-            "START GILDED SKIES", Color3.new(1, 1, 1), Enum.Font.GothamBold
-        parent2.TextSize = 14
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = parent2
+        parent2.Text = "Start Gilded Skies"
+        lobbySkin()(parent2, true)
         local function helper9()
             if sharedValue.gsL then
                 sharedValue.gsL.intent = "run"
@@ -854,27 +895,23 @@ return function(context)
             Vector2.new(0.5, 0), UDim2.new(0.5, 0, 0, 8), UDim2.fromOffset(250, 34)
         parent3.BackgroundTransparency = 1
         parent3.Parent = parent2
-        local function helper9(text, argument, backgroundColor3, argument2)
+        local skin = lobbySkin()
+        local function helper9(text, argument, primary, argument2)
             local parent4 = Instance.new("TextButton")
             parent4.Size, parent4.Position = UDim2.fromOffset(120, 34), UDim2.fromOffset(argument, 0)
-            parent4.BackgroundColor3 = backgroundColor3
             parent4.BorderSizePixel = 0
-            parent4.AutoButtonColor = true
-            parent4.Text, parent4.TextColor3, parent4.Font = text, Color3.new(1, 1, 1), Enum.Font.GothamBold
-            parent4.TextSize = 14
-            backgroundColor3 = Instance.new("UICorner")
-            backgroundColor3.CornerRadius = UDim.new(0, 8)
-            backgroundColor3.Parent = parent4
+            parent4.Text = text
+            skin(parent4, primary)
             parent4.Parent = parent3
             local function helper10()
                 pcall(argument2)
             end
             parent4.MouseButton1Click:Connect(helper10)
         end
-        helper9("RESTART RUN", 0, Color3.fromRGB(46, 140, 72), function()
+        helper9("Restart run", 0, true, function()
             context.gsNewRun("the RESTART RUN button")
         end)
-        helper9("LOBBY", 130, Color3.fromRGB(60, 64, 78), function()
+        helper9("Lobby", 130, false, function()
             context.gsToLobby("the LOBBY button")
         end)
         parent2.Parent = parent

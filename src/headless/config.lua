@@ -44,12 +44,12 @@ return function(Context)
             CustomMap = { Color = "#fc0313", Transparency = 0.25 },
             ReturnInventoryLimit = 9999,
             Optimizations = { DestroyGear = true, PerformanceMode = true },
-            BossSettings = { Walkspeed = 33, CastingRange = 75, EnemyDistance = 55 },
+            BossSettings = { CastingRange = 75, EnemyDistance = 55 },
             OrbitMobs = false,
             KillOnWave = 100000,
             CastBetweenEnemies = { Enabled = true, Range = 40 },
             DisableDodging = false,
-            MobSettings = { Walkspeed = 33, CastingRange = 75, EnemyDistance = 50 },
+            MobSettings = { CastingRange = 75, EnemyDistance = 50 },
         },
         Universal = {
             Webhook = {
@@ -242,6 +242,12 @@ return function(Context)
 
     local UserConfig = ReadConfig()
     local Config = Merge(Defaults, UserConfig or {})
+    for _, SectionName in ipairs({ "BossSettings", "MobSettings" }) do
+        local Section = Config.GameSettings and Config.GameSettings[SectionName]
+        if type(Section) == "table" then
+            Section.Walkspeed = nil
+        end
+    end
     if not WriteConfig(Config) then
         WriteLog("could not write " .. ConfigPath)
     end
@@ -353,10 +359,10 @@ return function(Context)
     Set("killOnWave", tonumber(Game.KillOnWave) or CFG.killOnWave)
     Set("castBetweenEnemies", type(Game.CastBetweenEnemies) == "table" and Game.CastBetweenEnemies or CFG.castBetweenEnemies)
     Set("disableDodging", Game.DisableDodging == true)
-    Set("bossWalkSpeed", tonumber((Game.BossSettings or {}).Walkspeed) or CFG.bossWalkSpeed)
+    CFG.bossWalkSpeed = nil
+    CFG.mobWalkSpeed = nil
     Set("bossCastingRange", tonumber((Game.BossSettings or {}).CastingRange) or CFG.bossCastingRange)
     Set("bossEnemyDistance", tonumber((Game.BossSettings or {}).EnemyDistance) or CFG.bossEnemyDistance)
-    Set("mobWalkSpeed", tonumber((Game.MobSettings or {}).Walkspeed) or CFG.mobWalkSpeed)
     Set("mobCastingRange", tonumber((Game.MobSettings or {}).CastingRange) or CFG.mobCastingRange)
     Set("mobEnemyDistance", tonumber((Game.MobSettings or {}).EnemyDistance) or CFG.mobEnemyDistance)
     Set("multifarm", Multifarm)

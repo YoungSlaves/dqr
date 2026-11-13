@@ -15,6 +15,67 @@ return function(Context)
     CFG.visuals = true
     CFG.minimap = false
 
+    local function CurrentHumanoid()
+        local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
+        local Character = Player and Player.Character
+        return Character and Character:FindFirstChildOfClass("Humanoid")
+    end
+
+    local function CurrentWalkSpeed()
+        local Humanoid = CurrentHumanoid()
+        local Speed = Humanoid and tonumber(Humanoid.WalkSpeed)
+        return if Speed and Speed > 0 then Speed else nil
+    end
+
+    local function DisableWalkSpeedControl()
+        local Baseline = CurrentWalkSpeed() or tonumber(CFG.tweenWalk) or 16
+        RT.WalkSpeedBaseline = Baseline
+        CFG.tweenWalk = Baseline
+        CFG.speedCustom = false
+        Context.speedHoldTick = function() end
+        Context.speedApply = function() end
+        Context.speedCustomOn = function()
+            return false
+        end
+        Context.speedNormal = function()
+            return CurrentWalkSpeed() or Baseline
+        end
+        Context.speedBurst = function()
+            return CurrentWalkSpeed() or Baseline
+        end
+        Context.walkNormal = function(Humanoid)
+            return (Humanoid and Humanoid.WalkSpeed) or CurrentWalkSpeed() or Baseline
+        end
+        Context.buffHoldsSpeed = function()
+            return false
+        end
+        Context.restoreWalkSpeed = function() end
+        if type(Context.LC) == "table" then
+            Context.LC.on = function(_, Speed)
+                return Speed
+            end
+            Context.LC.off = function() end
+            Context.LC.stop = function() end
+            Context.LC.boosted = function()
+                return false
+            end
+            Context.LC.active = function()
+                return false
+            end
+            Context.LC.speed = function()
+                return nil
+            end
+            if type(Context.LC.CONFIG) == "table" then
+                Context.LC.CONFIG.FallbackSpeed = Baseline
+            end
+        end
+        if Context.MV then
+            Context.MV.walkSpeed = nil
+            Context.MV.walkSpeedBefore = nil
+        end
+    end
+    DisableWalkSpeedControl()
+
     local Resume = {
         autoQueue = Automation.AutoQueue ~= false,
         autoQueueReplay = Automation.AutoQueueReplay ~= false,
@@ -190,15 +251,9 @@ return function(Context)
             end
         end)
         if Humanoid then
-            if Context.restoreWalkSpeed then
-                pcall(Context.restoreWalkSpeed, Humanoid)
-            end
             pcall(function()
                 Humanoid:Move(Vector3.zero, false)
             end)
-            if Humanoid.WalkSpeed <= 0 then
-                Humanoid.WalkSpeed = 16
-            end
             Humanoid.AutoRotate = true
         end
         if Context.MV then

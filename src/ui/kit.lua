@@ -293,7 +293,7 @@ return function(context)
     end
 
     local function compactSlider(parent, label, desc, min, max, allowFloat, getter, setter, order, tooltip, step)
-        local card = kit.row(parent, label, order, 176, 136)
+        local card = kit.row(parent, label, order, 176, theme.row.caption)
         local box = numericBox(card, 80, 2)
         local suffix = prim.text(card, { role = "captionSub", text = tostring(desc or ""), layoutOrder = 3 })
         suffix.Size = UDim2.fromOffset(40, 26)
@@ -407,7 +407,7 @@ return function(context)
     ---------------------------------------------------------------- range
     function kit.rangeSlider(parent, label, desc, min, max, getter, setter, order, tooltip, suffix)
         if context.COMPACT == true then
-            local card = kit.row(parent, label, order, 200, 200)
+            local card = kit.row(parent, label, order, 200, theme.row.caption)
             local low = numericBox(card, 58, 2)
             local to = prim.text(card, { role = "captionSub", text = "to", layoutOrder = 3 })
             to.Size = UDim2.fromOffset(16, 26)
@@ -575,7 +575,7 @@ return function(context)
         holder.Parent = parent
         prim.vlist(holder, 4)
 
-        local card = kit.row(holder, label, 1, 160, 150)
+        local card = kit.row(holder, label, 1, 160, theme.row.caption)
         local value = prim.text(card, { role = "captionKey", text = "", layoutOrder = 2 })
         value.Size = UDim2.fromOffset(118, 20)
         value.TextXAlignment = Enum.TextXAlignment.Right
@@ -669,7 +669,7 @@ return function(context)
     end
 
     function kit.textInput(parent, label, getter, setter, order, tooltip, placeholder)
-        local card = kit.row(parent, label, order, 200, 196)
+        local card = kit.row(parent, label, order, 200, theme.row.caption)
         local input = Instance.new("TextBox")
         input.Name = "Input"
         input.BackgroundColor3 = P.DeepForest

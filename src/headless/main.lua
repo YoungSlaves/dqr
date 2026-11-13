@@ -264,15 +264,17 @@ return function(Context)
         Stroke.Transparency = 0.35
         Stroke.Parent = ToggleButton
 
-        local ArmedAt, LastToggle = os.clock() + 0.35, 0
-        ToggleButton.Activated:Connect(function()
+        local ArmedAt, LastToggle = os.clock() + 0.5, 0
+        local function OnToggle()
             local Now = os.clock()
             if Now < ArmedAt or Now - LastToggle < 0.35 then
                 return
             end
             LastToggle = Now
             SetEnabled(not Context.headlessEnabled, true)
-        end)
+        end
+        ToggleButton.MouseButton1Click:Connect(OnToggle)
+        ToggleButton.TouchTap:Connect(OnToggle)
         Context.toggleGui = ToggleGui
         Context.toggleButton = ToggleButton
     end

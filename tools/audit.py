@@ -99,13 +99,20 @@ check(
 firefly_root = re.search(r"function shapes\.spawnFireflies[\s\S]{0,400}?ensureGui\(\"ambient\"\)", joined)
 check(bool(firefly_root), "fireflies spawn in the ambient layer")
 
-check(re.search(r"grain\(row, 90\)", joined) is not None, "plank rows carry their own grain")
+shapes_text = text[ROOT / "src/ui/shapes.lua"]
 check(
-    "row.Rotation = ((index * 7) % 3 - 1) * 0.6" in text[ROOT / "src/ui/shapes.lua"],
-    "row rotation formula lives in shapes.plankRow",
+    "accent.Name = \"EdgeAccent\"" in shapes_text and "row.Rotation" not in shapes_text,
+    "rows use the flat glass treatment with a signal edge",
 )
-grain_sites = len(re.findall(r"shapes\.grain\(", joined))
-check(grain_sites >= 6, "each plank/sign face asks for its own grain instance", str(grain_sites))
+check(
+    "sheen.Parent = row" in shapes_text,
+    "flat rows carry their own cool sheen",
+)
+check(
+    "LeafLight" in text[ROOT / "src/ui/theme.lua"]
+    and "75f2c7" in text[ROOT / "src/ui/theme.lua"].lower(),
+    "neon-grove palette is the single source of colour",
+)
 
 print("\nAUDIT", "OK" if FAIL == 0 else f"FAILED ({FAIL})")
 sys.exit(0 if FAIL == 0 else 1)

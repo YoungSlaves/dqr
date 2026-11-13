@@ -6954,50 +6954,37 @@ return function(context)
         end
         local hud = Instance.new("Frame")
         hud.Name, hud.BackgroundTransparency, hud.AnchorPoint, hud.Position, hud.Size =
-            "HUD", 1, Vector2.new(0, 1), UDim2.new(0, 20, 1, -20), UDim2.fromOffset(560, 199)
+            "HUD", 1, Vector2.new(0, 1), UDim2.new(0, 24, 1, -24), UDim2.fromOffset(600, 214)
         hud.ZIndex = 2
         hud.Parent = dungeonAutofarmUi
         local HP = theme.palette
-        local function hudGrain(parent, rotation)
-            local gradient = Instance.new("UIGradient")
-            gradient.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, HP.Bark),
-                ColorSequenceKeypoint.new(0.35, HP.Wood),
-                ColorSequenceKeypoint.new(0.7, HP.Bark),
-                ColorSequenceKeypoint.new(1, HP.Wood),
-            })
-            gradient.Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.55),
-                NumberSequenceKeypoint.new(0.35, 0.35),
-                NumberSequenceKeypoint.new(0.7, 0.5),
-                NumberSequenceKeypoint.new(1, 0.3),
-            })
-            gradient.Rotation = rotation or 8
-            gradient.Parent = parent
-            return gradient
-        end
-        local function helper120(name2, parent, argument, band, argument2)
+        local function helper120(name2, parent, argument, band)
             local panel = Instance.new("Frame")
             panel.Name, panel.BackgroundColor3, panel.BorderSizePixel, panel.Position, panel.Size =
                 name2, HP.DeepForest, 0, UDim2.fromOffset(0, parent), UDim2.fromOffset(argument, band)
+            panel.BackgroundTransparency = 0.04
             panel.ZIndex = 3
             panel.Parent = hud
-            uiLibrary.corner(panel, 8)
-            uiLibrary.stroke(panel, HP.Bark, 3)
+            uiLibrary.corner(panel, 12)
+            uiLibrary.stroke(panel, HP.Bark, 1)
             local inner = Instance.new("UIStroke")
-            inner.Color, inner.Thickness, inner.Transparency = HP.LeafLight, 1, 0.55
+            inner.Color, inner.Thickness, inner.Transparency = HP.Fern, 1, 0.78
             inner.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             inner.Parent = panel
-            hudGrain(panel, 8)
-            local moss = Instance.new("Frame")
-            moss.Name = "Moss"
-            moss.BackgroundColor3, moss.BackgroundTransparency, moss.BorderSizePixel =
-                HP.Fern, 0.25, 0
-            moss.Position = UDim2.fromOffset(6, 3)
-            moss.Size = UDim2.new(1, -12, 0, 3)
-            moss.ZIndex = 5
-            moss.Parent = panel
-            uiLibrary.corner(moss, 2)
+            local signal = Instance.new("Frame")
+            signal.Name = "Signal"
+            signal.BackgroundColor3, signal.BorderSizePixel = HP.Fern, 0
+            signal.Position, signal.Size = UDim2.fromOffset(0, 0), UDim2.new(1, 0, 0, 2)
+            signal.ZIndex = 5
+            signal.Parent = panel
+            uiLibrary.corner(signal, 999)
+            local signalGradient = Instance.new("UIGradient")
+            signalGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, HP.Fern),
+                ColorSequenceKeypoint.new(0.55, HP.LeafLight),
+                ColorSequenceKeypoint.new(1, HP.Hot),
+            })
+            signalGradient.Parent = signal
             return panel
         end
         local function helper121(
@@ -7025,47 +7012,48 @@ return function(context)
             end
             return textControl7
         end
-        runsThisAccount = helper120("TitleChip", 0, 326, 34, theme.RadiusMd)
-        helper121(runsThisAccount, "Swangy", "windowChip", 12, 7, 138, 20)
+        runsThisAccount = helper120("TitleChip", 0, 600, 46, 12)
+        helper121(runsThisAccount, "SWANGY // OS", "windowChip", 16, 12, 190, 22)
         local hudLeaf = Instance.new("Frame")
         hudLeaf.Name, hudLeaf.BackgroundColor3, hudLeaf.BorderSizePixel = "Leaf", HP.LeafLight, 0
-        hudLeaf.AnchorPoint, hudLeaf.Position = Vector2.new(1, 0.5), UDim2.new(1, -8, 0.5, 0)
-        hudLeaf.Size, hudLeaf.Rotation, hudLeaf.ZIndex = UDim2.fromOffset(10, 10), 45, 5
+        hudLeaf.AnchorPoint, hudLeaf.Position = Vector2.new(1, 0.5), UDim2.new(1, -14, 0.5, 0)
+        hudLeaf.Size, hudLeaf.Rotation, hudLeaf.ZIndex = UDim2.fromOffset(7, 7), 0, 5
         hudLeaf.Parent = runsThisAccount
         uiLibrary.corner(hudLeaf, 999)
         value3, value6 =
             ipairs, {
-                helper121(runsThisAccount, "|", "captionKey", 154, 7, 6, 20, theme.TextMuted),
-                helper121(runsThisAccount, ver, "rowStat", 160, 7, 80, 20, theme.TextSub),
-                (helper121(runsThisAccount, "|", "captionKey", 240, 7, 6, 20, theme.TextMuted)),
+                helper121(runsThisAccount, "|", "captionKey", 214, 12, 8, 20, theme.TextMuted),
+                helper121(runsThisAccount, ver, "rowStat", 228, 12, 100, 20, theme.TextSub),
+                (helper121(runsThisAccount, "|", "captionKey", 336, 12, 8, 20, theme.TextMuted)),
             }
         for key7, entry25 in value3(value6) do
             entry25.TextXAlignment = Enum.TextXAlignment.Center
         end
-        local textControl18 = helper121(runsThisAccount, "fps: --", "monoStat", 254, 7, 66, 20)
-        local value132 = helper120("Stats", 42, 560, 121, theme.RadiusLg)
+        local textControl18 = helper121(runsThisAccount, "fps: --", "monoStat", 468, 12, 118, 20, nil, true)
+        local value132 = helper120("Stats", 54, 600, 112, 12)
         local function helper122(argument, argument2, argument3)
-            local plank = Instance.new("Frame")
-            plank.Name, plank.BackgroundColor3, plank.BackgroundTransparency =
-                "Plank", HP.Wood, 0.35
-            plank.BorderSizePixel = 0
-            plank.Position = UDim2.fromOffset(10, argument2 - 3)
-            plank.Size = UDim2.fromOffset(540, 28)
-            plank.ZIndex = 2
-            plank.Parent = value132
-            uiLibrary.corner(plank, 4)
-            hudGrain(plank, 90)
-            local edge = Instance.new("Frame")
-            edge.BackgroundColor3, edge.BorderSizePixel = HP.Bark, 0
-            edge.Position = UDim2.new(0, 0, 1, -2)
-            edge.Size = UDim2.new(1, 0, 0, 2)
-            edge.ZIndex = 3
-            edge.Parent = plank
-            helper121(value132, argument, "rowStat", 14, argument2, 120, 24)
-            if argument3 then
-                return helper121(value132, "--", "monoStat", 110, argument2, 436, 24, nil, true)
-            end
-            return helper121(value132, "--", "monoStat", 140, argument2, 406, 24, nil, true)
+            local index = ({ [11] = 1, [37] = 2, [63] = 3, [89] = 4 })[argument2] or 1
+            local column = (index - 1) % 2
+            local row = math.floor((index - 1) / 2)
+            local cell = Instance.new("Frame")
+            cell.Name = "Stat"
+            cell.BackgroundColor3, cell.BackgroundTransparency, cell.BorderSizePixel =
+                HP.Moss, 0.16, 0
+            cell.Position = UDim2.fromOffset(10 + column * 294, 6 + row * 50)
+            cell.Size = UDim2.fromOffset(280, 44)
+            cell.ZIndex = 2
+            cell.Parent = value132
+            uiLibrary.corner(cell, 8)
+            local accent = Instance.new("Frame")
+            accent.Name = "Accent"
+            accent.BackgroundColor3, accent.BorderSizePixel = index % 2 == 0 and HP.Hot or HP.Fern, 0
+            accent.Position, accent.Size = UDim2.fromOffset(0, 10), UDim2.fromOffset(2, 24)
+            accent.ZIndex = 3
+            accent.Parent = cell
+            uiLibrary.corner(accent, 999)
+            local label = helper121(cell, argument, "captionKey", 10, 5, 260, 13)
+            label.TextColor3 = theme.TextMuted
+            return helper121(cell, "--", "rowStat", 10, 20, 260, 19, nil, argument3)
         end
         local textControl19 = helper122("Playtime", 11)
         local textControl20 = helper122("Status", 37, true)
@@ -7073,16 +7061,16 @@ return function(context)
         local textControl22 = helper122("Ping", 89)
         statusChip = uiLibrary.label(hud, "[" .. config.menuKey .. "] to open GUI", "rowLabel", 1)
         statusChip.Position, statusChip.Size, statusChip.TextColor3 =
-            UDim2.fromOffset(0, 173), UDim2.fromOffset(200, 24), theme.TextSub
+            UDim2.fromOffset(10, 178), UDim2.fromOffset(260, 20), theme.TextSub
         statusChip.TextStrokeTransparency = 0.1
         statusChip.ZIndex = 3
         statusChip = Instance.new("Frame")
         statusChip.Name, statusChip.BackgroundColor3, statusChip.BorderSizePixel, statusChip.Position, statusChip.Size =
-            "StatusChip", HP.Wood, 0, UDim2.fromOffset(410, 173), UDim2.fromOffset(150, 24)
+            "StatusChip", HP.Moss, 0, UDim2.fromOffset(350, 176), UDim2.fromOffset(240, 30)
         statusChip.ZIndex = 3
         statusChip.Parent = hud
-        uiLibrary.corner(statusChip, 4)
-        uiLibrary.stroke(statusChip, HP.Bark, 2)
+        uiLibrary.corner(statusChip, 8)
+        uiLibrary.stroke(statusChip, HP.Bark, 1)
         local dot = Instance.new("Frame")
         dot.Name, dot.BackgroundColor3, dot.BorderSizePixel, dot.AnchorPoint, dot.Position, dot.Size =
             "Dot", theme.StatusBad, 0, Vector2.new(0, 0.5), UDim2.new(0, 9, 0.5, 0), UDim2.fromOffset(6, 6)
@@ -7098,11 +7086,11 @@ return function(context)
         textControl23.ZIndex = 4
         local clockChip = Instance.new("Frame")
         clockChip.Name, clockChip.BackgroundColor3, clockChip.BorderSizePixel, clockChip.Position, clockChip.Size =
-            "ClockChip", HP.Wood, 0, UDim2.fromOffset(318, 173), UDim2.fromOffset(84, 24)
+            "ClockChip", HP.Moss, 0, UDim2.fromOffset(528, 176), UDim2.fromOffset(62, 30)
         clockChip.ZIndex = 3
         clockChip.Parent = hud
-        uiLibrary.corner(clockChip, 4)
-        uiLibrary.stroke(clockChip, HP.Bark, 2)
+        uiLibrary.corner(clockChip, 8)
+        uiLibrary.stroke(clockChip, HP.Bark, 1)
         local textControl24 = uiLibrary.label(clockChip, "--:--", "captionStat", 2)
         textControl24.Position, textControl24.Size = UDim2.fromOffset(0, 0), UDim2.new(1, 0, 1, 0)
         textControl24.ZIndex = 4
@@ -10952,21 +10940,21 @@ return function(context)
         local sharedValue40, theme2 = config.minimapSize or 220, {}
         local MP = theme.palette
         theme2.Bg = MP.DeepForest
-        theme2.Panel = MP.DeepForest
+        theme2.Panel = MP.Moss
         theme2.Raised = MP.Wood
         theme2.Stroke = MP.Bark
         theme2.StrokeSoft = MP.Bark
         theme2.Text = MP.Parchment
-        theme2.Muted = theme.TextSub
-        theme2.Faint = theme.TextMuted
+        theme2.Muted = MP.Muted
+        theme2.Faint = MP.Muted
         theme2.Green = MP.LeafLight
         theme2.Red = theme.danger
-        theme2.Purple = MP.Firefly
+        theme2.Purple = MP.Hot
         theme2.Pink = MP.Fern
-        theme2.Blue = MP.LeafLight
+        theme2.Blue = MP.Fern
         theme2.White = MP.Parchment
         zone.theme = theme2
-        theme2.Orb = MP.Firefly
+        theme2.Orb = MP.LeafLight
         local sharedValue41 = {}
         pcall(function()
             sharedValue41.Regular, sharedValue41.Medium =
@@ -11070,13 +11058,13 @@ return function(context)
             local new = NumberSequenceKeypoint.new
             return helper155("UIGradient", {
                 Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, MP.Bark),
-                    ColorSequenceKeypoint.new(0.35, MP.Wood),
+                    ColorSequenceKeypoint.new(0, MP.Wood),
+                    ColorSequenceKeypoint.new(0.45, MP.Moss),
                     ColorSequenceKeypoint.new(0.7, MP.Bark),
                     ColorSequenceKeypoint.new(1, MP.Wood),
                 }),
                 Rotation = rotation,
-                Transparency = NumberSequence.new({ new(0, 0), new(0.55, 0.2), new(1, 1) }),
+                Transparency = NumberSequence.new({ new(0, 0.05), new(0.55, 0.28), new(1, 1) }),
             }, argument)
         end
         local hlMinimap = Instance.new("Frame")
@@ -11129,23 +11117,20 @@ return function(context)
         strokeInner.Transparency = 0.55
         strokeInner.Parent = view
         local mapMoss = Instance.new("Frame")
-        mapMoss.Name = "Moss"
-        mapMoss.BackgroundTransparency = 1
+        mapMoss.Name = "Signal"
+        mapMoss.BackgroundColor3 = MP.Fern
+        mapMoss.BackgroundTransparency = 0.1
         mapMoss.BorderSizePixel = 0
-        mapMoss.Size = UDim2.new(1, 0, 0, 4)
+        mapMoss.Size = UDim2.new(1, 0, 0, 2)
         mapMoss.ZIndex = 35
         mapMoss.Parent = view
-        for index = 1, 3 do
-            local segment = Instance.new("Frame")
-            segment.Name = "MossSegment"
-            segment.BackgroundColor3 = MP.Fern
-            segment.BackgroundTransparency = 0.25
-            segment.BorderSizePixel = 0
-            segment.Position = UDim2.new((index - 1) / 3, 0, 0, 0)
-            segment.Size = UDim2.new(1 / 3, -2, 0, 4)
-            segment.ZIndex = 35
-            segment.Parent = mapMoss
-        end
+        local mapSignal = Instance.new("UIGradient")
+        mapSignal.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, MP.Fern),
+            ColorSequenceKeypoint.new(0.55, MP.LeafLight),
+            ColorSequenceKeypoint.new(1, MP.Purple),
+        })
+        mapSignal.Parent = mapMoss
         local sharedValue48 = helper155("Frame", {
             Name = "Header",
             BackgroundColor3 = theme2.Panel,

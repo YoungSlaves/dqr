@@ -15,12 +15,12 @@ return function(context)
         title = { role = "title", size = theme.type.sign, color = P.Parchment, transparency = 0 },
         tab = { role = "title", size = theme.type.tab, color = P.Parchment, transparency = 0 },
         section = { role = "title", size = theme.type.section, color = P.LeafLight, transparency = 0 },
-        sectionDesc = { role = "body", size = theme.type.sectionDesc, color = P.Parchment, transparency = 0.30 },
+        sectionDesc = { role = "body", size = theme.type.sectionDesc, color = P.Muted, transparency = 0 },
         rowLabel = { role = "body", size = theme.type.row, color = P.Parchment, transparency = 0 },
-        rowCaption = { role = "body", size = theme.type.caption, color = P.Parchment, transparency = 0.50 },
-        captionKey = { role = "body", size = theme.type.caption, color = P.Parchment, transparency = 0.30 },
-        captionSub = { role = "body", size = theme.type.caption, color = P.Parchment, transparency = 0.50 },
-        captionStat = { role = "body", size = theme.type.caption, color = P.Parchment, transparency = 0.30 },
+        rowCaption = { role = "body", size = theme.type.caption, color = P.Muted, transparency = 0 },
+        captionKey = { role = "body", size = theme.type.caption, color = P.Muted, transparency = 0.18 },
+        captionSub = { role = "body", size = theme.type.caption, color = P.Muted, transparency = 0 },
+        captionStat = { role = "body", size = theme.type.caption, color = P.Muted, transparency = 0.12 },
         button = { role = "title", size = theme.type.button, color = P.Parchment, transparency = 0 },
         buttonAccent = { role = "title", size = theme.type.button, color = P.DeepForest, transparency = 0 },
         input = { role = "body", size = theme.type.input, color = P.Parchment, transparency = 0 },
@@ -187,16 +187,17 @@ return function(context)
         end
         local frame = Instance.new("Frame")
         frame.Name = "Tooltip"
-        frame.BackgroundColor3 = P.Wood
+        frame.BackgroundColor3 = P.DeepForest
+        frame.BackgroundTransparency = 0.02
         frame.BorderSizePixel = 0
         frame.Visible = false
         frame.ZIndex = 500
         frame.AutomaticSize = Enum.AutomaticSize.XY
         frame.Size = UDim2.fromOffset(0, 0)
         frame.Parent = host
-        shapes.corner(frame, theme.radius.plank)
-        shapes.stroke(frame, P.Bark, 2)
-        shapes.pad(frame, 4, 6, 4, 6)
+        shapes.corner(frame, theme.radius.sign)
+        shapes.stroke(frame, P.Fern, 1, 0.25)
+        shapes.pad(frame, 7, 9, 7, 9)
         local label = Instance.new("TextLabel")
         label.BackgroundTransparency = 1
         label.AutomaticSize = Enum.AutomaticSize.XY

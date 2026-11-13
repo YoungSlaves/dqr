@@ -588,18 +588,17 @@ return function(context)
 
         local menu = Instance.new("Frame")
         menu.Name = "Menu"
-        menu.BackgroundColor3 = P.Wood
-        menu.BackgroundTransparency = 1 - theme.rowPlankAlpha
+        menu.BackgroundColor3 = P.DeepForest
+        menu.BackgroundTransparency = 0.02
         menu.BorderSizePixel = 0
         menu.AutomaticSize = Enum.AutomaticSize.Y
         menu.Size = UDim2.new(1, 0, 0, 0)
         menu.Visible = false
         menu.LayoutOrder = 2
         menu.Parent = holder
-        shapes.corner(menu, theme.radius.plank)
-        shapes.stroke(menu, P.Bark, 2)
-        shapes.grain(menu, 8)
-        shapes.pad(menu, 4)
+        shapes.corner(menu, theme.radius.sign)
+        shapes.stroke(menu, P.Bark, 1)
+        shapes.pad(menu, 6)
         local scrolling = Instance.new("ScrollingFrame")
         scrolling.Name = "Rows"
         scrolling.BackgroundTransparency = 1
@@ -609,8 +608,8 @@ return function(context)
         scrolling.CanvasSize = UDim2.new()
         scrolling.AutomaticCanvasSize = Enum.AutomaticSize.Y
         scrolling.ScrollingDirection = Enum.ScrollingDirection.Y
-        scrolling.ScrollBarThickness = 6
-        scrolling.ScrollBarImageColor3 = P.Bark
+        scrolling.ScrollBarThickness = 4
+        scrolling.ScrollBarImageColor3 = P.Fern
         scrolling.Parent = menu
         local constraint = Instance.new("UISizeConstraint")
         constraint.MaxSize = Vector2.new(math.huge, 240)
@@ -629,17 +628,17 @@ return function(context)
             value.Text = tostring(current)
             for key, entry in pairs(entries) do
                 local selected = key == current
-                entry.BackgroundColor3 = selected and P.Fern or P.Wood
-                entry.TextColor3 = selected and P.LeafLight or P.Parchment
+                entry.BackgroundColor3 = selected and P.LeafLight or P.Wood
+                entry.TextColor3 = selected and P.DeepForest or P.Parchment
             end
         end
         for index, option in ipairs(options) do
             local button = Instance.new("TextButton")
             button.Name = tostring(option.value)
             button.BackgroundColor3 = P.Wood
-            button.BackgroundTransparency = 0.25
+            button.BackgroundTransparency = 0.16
             button.BorderSizePixel = 0
-            button.Size = UDim2.new(1, 0, 0, 30)
+            button.Size = UDim2.new(1, 0, 0, 32)
             button.Text = option.label or tostring(option.value)
             button.TextSize = 12
             button.TextColor3 = P.Parchment
@@ -651,7 +650,7 @@ return function(context)
                 button.BackgroundTransparency = 0
             end)
             button.MouseLeave:Connect(function()
-                button.BackgroundTransparency = 0.25
+                button.BackgroundTransparency = 0.16
             end)
             button.MouseButton1Click:Connect(function()
                 setter(option.value)
@@ -1280,20 +1279,30 @@ return function(context)
         head.Name = "SectionHead"
         head.AutoButtonColor = false
         head.BackgroundColor3 = P.Wood
-        head.BackgroundTransparency = 0.35
+        head.BackgroundTransparency = 0.08
         head.BorderSizePixel = 0
-        head.Size = UDim2.new(1, 0, 0, 30)
+        head.Size = UDim2.new(1, 0, 0, 36)
         head.Text = ""
         head.LayoutOrder = 1
         head.Parent = section
-        shapes.corner(head, theme.radius.plank)
-        shapes.grain(head, 90)
-        local headStroke = shapes.stroke(head, P.Bark, 2)
+        shapes.corner(head, theme.radius.sign)
+        local headSheen = shapes.grain(head, 0)
+        headSheen.Transparency = NumberSequence.new(0.45)
+        local headStroke = shapes.stroke(head, P.Bark, 1)
+        local accent = Instance.new("Frame")
+        accent.Name = "Accent"
+        accent.BackgroundColor3 = P.Fern
+        accent.BorderSizePixel = 0
+        accent.AnchorPoint = Vector2.new(0, 0.5)
+        accent.Position = UDim2.new(0, 0, 0.5, 0)
+        accent.Size = UDim2.fromOffset(3, 16)
+        accent.Parent = head
+        shapes.corner(accent, 999)
         local titleLabel = prim.text(head, {
             role = "section",
             text = title,
-            position = UDim2.fromOffset(12, 0),
-            size2 = UDim2.new(1, -48, 1, 0),
+            position = UDim2.fromOffset(16, 0),
+            size2 = UDim2.new(1, -52, 1, 0),
         })
         local chevron = kit.chevron(head)
         chevron.frame.AnchorPoint = Vector2.new(1, 0.5)
@@ -1302,16 +1311,16 @@ return function(context)
         local content = Instance.new("Frame")
         content.Name = "Content"
         content.BackgroundColor3 = P.DeepForest
-        content.BackgroundTransparency = 0.55
+        content.BackgroundTransparency = 0.16
         content.BorderSizePixel = 0
         content.AutomaticSize = Enum.AutomaticSize.Y
         content.Size = UDim2.new(1, 0, 0, 0)
         content.Visible = false
         content.LayoutOrder = 2
         content.Parent = section
-        shapes.corner(content, theme.radius.stone)
-        shapes.stroke(content, P.Bark, 2)
-        shapes.pad(content, theme.gap.row, theme.gap.row, theme.gap.row, theme.gap.row)
+        shapes.corner(content, theme.radius.sign)
+        shapes.stroke(content, P.Bark, 1)
+        shapes.pad(content, theme.gap.section, theme.gap.section, theme.gap.section, theme.gap.section)
         prim.vlist(content, theme.gap.row)
 
         if desc and desc ~= "" then
@@ -1336,8 +1345,8 @@ return function(context)
             end
             open = value
             chevron.setOpen(open)
-            titleLabel.TextColor3 = open and P.LeafLight or P.Parchment
-            headStroke.Transparency = open and 0.2 or 1
+            titleLabel.TextColor3 = open and P.Parchment or P.Muted
+            headStroke.Transparency = open and 0.3 or 0.65
             content.Visible = open
         end
         setOpen(false, true)

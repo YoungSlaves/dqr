@@ -6,18 +6,20 @@ return function(context)
 
     -- ---------------------------------------------------------------- palette
     local P = {
-        DeepForest = Color3.fromHex("0f2a1d"),
-        Moss = Color3.fromHex("2f5d3a"),
-        Fern = Color3.fromHex("5b8c3a"),
-        LeafLight = Color3.fromHex("a8c66c"),
-        Bark = Color3.fromHex("4a3222"),
-        Wood = Color3.fromHex("7a5230"),
-        Parchment = Color3.fromHex("efe6c8"),
-        Firefly = Color3.fromHex("f2d974"),
+        DeepForest = Color3.fromHex("070b12"),
+        Moss = Color3.fromHex("0d1624"),
+        Fern = Color3.fromHex("55c8ff"),
+        LeafLight = Color3.fromHex("75f2c7"),
+        Bark = Color3.fromHex("24384f"),
+        Wood = Color3.fromHex("111e30"),
+        Parchment = Color3.fromHex("eaf7ff"),
+        Firefly = Color3.fromHex("c8ff6a"),
+        Hot = Color3.fromHex("ff6fd8"),
+        Muted = Color3.fromHex("8fa7be"),
     }
     local SEMANTIC = {
-        warning = Color3.fromHex("e8b84b"),
-        danger = Color3.fromHex("cf5b3a"),
+        warning = Color3.fromHex("ffc857"),
+        danger = Color3.fromHex("ff6b7a"),
     }
 
     local function dim(color, alpha)
@@ -33,55 +35,60 @@ return function(context)
     -- derived (no new hexes)
     theme.text = {
         primary = P.Parchment,
-        secondary = P.Parchment, -- 0.30 transparency, applied by the text helper
-        muted = P.Parchment, -- 0.50 transparency
+        secondary = P.Muted,
+        muted = P.Muted,
         onAccent = P.DeepForest,
-        secondaryAlpha = 0.30,
-        mutedAlpha = 0.50,
+        secondaryAlpha = 0.10,
+        mutedAlpha = 0.35,
     }
-    theme.panelDim = P.Moss -- 0.18 transparency
-    theme.panelDimAlpha = 0.18
-    theme.rowPlank = P.Wood -- 0.35 transparency
-    theme.rowPlankAlpha = 0.35
+    theme.panelDim = P.Wood -- 0.10 transparency
+    theme.panelDimAlpha = 0.10
+    theme.rowPlank = P.Wood -- 0.12 transparency
+    theme.rowPlankAlpha = 0.12
     theme.scrim = P.DeepForest
-    theme.scrimAlpha = 0.55
+    theme.scrimAlpha = 0.68
+    theme.accent = P.LeafLight
+    theme.accentCool = P.Fern
+    theme.accentHot = P.Hot
+    theme.line = P.Bark
+    theme.surface = P.Wood
 
     -- ---------------------------------------------------------------- metrics
     theme.window = {
-        width = 760,
-        height = 520,
-        minWidth = 600,
-        minHeight = 400,
-        maxWidth = 1100,
-        maxHeight = 780,
+        width = 920,
+        height = 600,
+        minWidth = 720,
+        minHeight = 500,
+        maxWidth = 1280,
+        maxHeight = 900,
     }
-    theme.header = 56
-    theme.branch = { height = 6, knot = 4, rope = 12 }
-    theme.sign = { width = 168, height = 34, radius = 3 }
-    theme.rail = { width = 216, tabWidth = 184, tabHeight = 34, ropeRailX = 10 }
-    theme.footer = 30
-    theme.row = { height = 34, caption = 46, radius = 4 }
-    theme.pad = { window = 14, row = 6, group = 8, section = 12 }
-    theme.gap = { row = 6, group = 8, section = 12 }
-    theme.stroke = { bark = 3, inner = 1, innerInset = 2, innerAlpha = 0.55, hairlineAlpha = 0.6 }
-    theme.radius = { plank = 4, stone = 10, sign = 3, chip = 3, pill = 999 }
-    theme.touch = 44
-    theme.tabRotations = { -0.7, 0.7, -0.7, 0.7, -0.7, 0.7 }
+    theme.header = 68
+    theme.branch = { height = 2, knot = 3, rope = 0 }
+    theme.sign = { width = 196, height = 36, radius = 9 }
+    theme.rail = { width = 214, tabWidth = 194, tabHeight = 40, ropeRailX = 0 }
+    theme.footer = 34
+    theme.row = { height = 38, caption = 50, radius = 8 }
+    theme.pad = { window = 18, row = 7, group = 9, section = 14 }
+    theme.gap = { row = 7, group = 9, section = 14 }
+    theme.stroke = { bark = 1, inner = 1, innerInset = 1, innerAlpha = 0.82, hairlineAlpha = 0.45 }
+    theme.radius = { plank = 8, stone = 15, sign = 9, chip = 999, pill = 999 }
+    theme.touch = 46
+    theme.tabRotations = { 0, 0, 0, 0, 0, 0 }
     theme.motion = {
-        hover = 0.12,
-        tab = 0.18,
-        open = 0.32,
-        close = 0.16,
-        fireflyMin = 1.2,
-        fireflyMax = 2.4,
-        driftMin = 6,
-        driftMax = 10,
-        footerPulse = 1.8,
+        hover = 0.15,
+        tab = 0.22,
+        open = 0.34,
+        close = 0.18,
+        fireflyMin = 1.8,
+        fireflyMax = 3.2,
+        driftMin = 4,
+        driftMax = 7,
+        footerPulse = 2.4,
     }
     theme.type = {
-        sign = 16,
+        sign = 18,
         tab = 13,
-        section = 14,
+        section = 16,
         sectionDesc = 11,
         row = 13,
         caption = 11,
@@ -99,52 +106,50 @@ return function(context)
     -- The page bodies (extracted verbatim) still read the old surface names.
     -- Every alias resolves to a Duskwood colour; no hex is introduced.
     theme.TextPrimary = theme.text.primary
-    theme.TextSub = dim(P.Parchment, 0.30)
-    theme.TextMuted = dim(P.Parchment, 0.50)
+    theme.TextSub = P.Muted
+    theme.TextMuted = dim(P.Muted, 0.22)
     theme.TextOnAccent = theme.text.onAccent
     theme.StatusBad = SEMANTIC.danger
     theme.StatusGood = P.LeafLight
     theme.SurfaceHeader = P.DeepForest
-    theme.SurfaceElement = dim(P.Wood, 0.35)
-    theme.SurfaceHover = dim(P.Wood, 0.18)
-    theme.SurfaceField = P.DeepForest
-    theme.SurfaceSection = dim(P.Moss, 0.30)
-    theme.SurfaceWell = dim(P.DeepForest, 0.10)
-    theme.SurfaceChip = P.Bark
+    theme.SurfaceElement = dim(P.Wood, 0.10)
+    theme.SurfaceHover = dim(P.Wood, 0.02)
+    theme.SurfaceField = P.Moss
+    theme.SurfaceSection = dim(P.Moss, 0.06)
+    theme.SurfaceWell = dim(P.DeepForest, 0.04)
+    theme.SurfaceChip = P.Wood
     theme.Hairline = P.Bark
-    theme.BodyTop = P.Moss
-    theme.BodyMid = P.DeepForest
+    theme.BodyTop = P.Wood
+    theme.BodyMid = P.Moss
     theme.BodyBot = P.DeepForest
-    theme.BodyTopA = 0.18
-    theme.BodyMidA = 0.05
-    theme.BodyBotA = 0.05
+    theme.BodyTopA = 0.04
+    theme.BodyMidA = 0.02
+    theme.BodyBotA = 0.02
     theme.SweepSpeed = 0.22
     theme.AccentA = P.Fern
     theme.AccentMid = P.Firefly
-    theme.AccentB = P.Fern
+    theme.AccentB = P.LeafLight
     theme.AccentDark = P.Moss
-    theme.RadiusSm = 4
-    theme.RadiusMd = 4
-    theme.RadiusLg = 10
-    theme.GapSm = 6
-    theme.GapMd = 8
-    theme.GapLg = 12
-    theme.GapXl = 14
-    theme.RowH = 34
-    theme.HeaderH = 56
+    theme.RadiusSm = 8
+    theme.RadiusMd = 10
+    theme.RadiusLg = 15
+    theme.GapSm = 7
+    theme.GapMd = 9
+    theme.GapLg = 14
+    theme.GapXl = 18
+    theme.RowH = 38
+    theme.HeaderH = 68
 
     -- ------------------------------------------------------------ typography
     -- Resolved exactly once, at boot, and cached.  Never per label, never per
     -- frame, never over the network: rbxasset:// is a client-local lookup.
     local candidates = {
         title = {
-            family = "rbxasset://fonts/families/Fondamento.json",
-            enumName = "Fondamento",
-            substitute = Enum.Font.Garamond,
+            enumName = "GothamBlack",
+            substitute = Enum.Font.GothamBold,
         },
         body = {
-            family = "rbxasset://fonts/families/Merriweather.json",
-            enumName = "Merriweather",
+            enumName = "Gotham",
             substitute = Enum.Font.SourceSans,
         },
     }

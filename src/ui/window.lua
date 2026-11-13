@@ -139,25 +139,23 @@ return function(context)
         header.Parent = window
 
         shapes.branch(header, width)
-        local sign, signLabel = shapes.titleSign(header, "Swangy")
-        signLabel.Text = "Swangy"
+        local sign, signLabel = shapes.titleSign(header, "SWANGY")
+        signLabel.Text = "SWANGY"
         shapes.decorateSign(sign)
 
-        -- version chip pinned to the branch's right end, not to the sign
         local versionChip = shapes.chip(header, versionTag, 1)
         versionChip.AnchorPoint = Vector2.new(1, 0)
-        versionChip.Position = UDim2.new(1, -14, 0, -8)
-        versionChip.BackgroundTransparency = 0.2
+        versionChip.Position = UDim2.new(1, -158, 0, 12)
 
-        -- window buttons: leaf buttons on non-rotated 44x44 wrappers
+        -- window controls: square glass keys, flush to the header edge
         local buttonHost = Instance.new("Frame")
         buttonHost.Name = "WindowButtons"
         buttonHost.BackgroundTransparency = 1
         buttonHost.AnchorPoint = Vector2.new(1, 0.5)
-        buttonHost.Position = UDim2.new(1, -8, 0, 44)
-        buttonHost.Size = UDim2.fromOffset(132, 44)
+        buttonHost.Position = UDim2.new(1, -10, 0, 34)
+        buttonHost.Size = UDim2.fromOffset(144, 44)
         buttonHost.Parent = header
-        prim.hlist(buttonHost, 0)
+        prim.hlist(buttonHost, 2)
 
         shown, fading, minimized = false, false, false
         local maximized = false
@@ -277,10 +275,13 @@ return function(context)
             local target = shapes.touchTarget(buttonHost, 44)
             target.Name = spec.name
             target.Size = UDim2.fromOffset(44, 44)
-            local leaf = shapes.rotatedSquare(target, 26, index == 3 and P.Bark or P.Moss, P.Bark)
+            target.BackgroundColor3 = index == 3 and P.DeepForest or P.Wood
+            target.BackgroundTransparency = index == 3 and 0.02 or 0.12
+            shapes.corner(target, theme.radius.sign)
+            local keyStroke = shapes.stroke(target, index == 3 and theme.danger or P.Bark, 1, 0.35)
             local glyph = Instance.new("Frame")
             glyph.Name = "Glyph"
-            glyph.BackgroundColor3 = index == 3 and P.Parchment or P.LeafLight
+            glyph.BackgroundColor3 = index == 3 and theme.danger or P.LeafLight
             glyph.BorderSizePixel = 0
             glyph.AnchorPoint = Vector2.new(0.5, 0.5)
             glyph.Position = UDim2.fromScale(0.5, 0.5)
@@ -297,16 +298,21 @@ return function(context)
             glyph.Parent = target
             target.MouseButton1Click:Connect(spec.handler)
             shell.pressable(target)
-            local leafFill = leaf.BackgroundColor3
             bind(target.MouseEnter, function()
                 TweenService:Create(
-                    leaf,
+                    target,
                     TweenInfo.new(0.14),
-                    { BackgroundColor3 = leafFill:Lerp(Color3.new(1, 1, 1), 0.18) }
+                    { BackgroundColor3 = P.Moss, BackgroundTransparency = 0 }
                 ):Play()
+                keyStroke.Transparency = 0
             end)
             bind(target.MouseLeave, function()
-                TweenService:Create(leaf, TweenInfo.new(0.2), { BackgroundColor3 = leafFill }):Play()
+                TweenService:Create(
+                    target,
+                    TweenInfo.new(0.2),
+                    { BackgroundColor3 = index == 3 and P.DeepForest or P.Wood, BackgroundTransparency = index == 3 and 0.02 or 0.12 }
+                ):Play()
+                keyStroke.Transparency = 0.35
             end)
             prim.tip(target, spec.hint)
         end
@@ -318,12 +324,20 @@ return function(context)
         grip.Position = UDim2.new(1, -4, 1, -4)
         grip.Size = UDim2.fromOffset(30, 30)
         grip.ZIndex = 65
-        local gripLeaf = shapes.rotatedSquare(grip, 16, P.Moss, P.Bark)
+        local gripLeaf = Instance.new("Frame")
+        gripLeaf.Name = "GripMark"
+        gripLeaf.BackgroundColor3 = P.Fern
+        gripLeaf.BorderSizePixel = 0
+        gripLeaf.AnchorPoint = Vector2.new(1, 1)
+        gripLeaf.Position = UDim2.new(1, -7, 1, -7)
+        gripLeaf.Size = UDim2.fromOffset(10, 10)
+        gripLeaf.Parent = grip
+        shapes.corner(gripLeaf, 3)
         bind(grip.MouseEnter, function()
-            TweenService:Create(gripLeaf, TweenInfo.new(0.14), { BackgroundColor3 = P.LeafLight }):Play()
+            TweenService:Create(gripLeaf, TweenInfo.new(0.14), { BackgroundColor3 = P.Hot }):Play()
         end)
         bind(grip.MouseLeave, function()
-            TweenService:Create(gripLeaf, TweenInfo.new(0.2), { BackgroundColor3 = P.Moss }):Play()
+            TweenService:Create(gripLeaf, TweenInfo.new(0.2), { BackgroundColor3 = P.Fern }):Play()
         end)
         prim.tip(grip, "Drag to resize the window.")
         local resizing, resizeStart, resizeSize
@@ -438,13 +452,20 @@ return function(context)
 
         local rail = Instance.new("Frame")
         rail.Name = "Rail"
-        rail.BackgroundColor3 = P.Wood
-        rail.BackgroundTransparency = 1 - theme.rowPlankAlpha
+        rail.BackgroundColor3 = P.DeepForest
+        rail.BackgroundTransparency = 0.02
         rail.BorderSizePixel = 0
         rail.Size = UDim2.fromOffset(theme.rail.width, 1)
         rail.Size = UDim2.new(0, theme.rail.width, 1, 0)
         rail.Parent = body
-        shapes.grain(rail, 8)
+        local railWash = Instance.new("UIGradient")
+        railWash.Color = ColorSequence.new(P.Moss, P.DeepForest)
+        railWash.Rotation = 90
+        railWash.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.3),
+            NumberSequenceKeypoint.new(1, 0.65),
+        })
+        railWash.Parent = rail
 
         local divider = Instance.new("Frame")
         divider.Name = "Divider"
@@ -466,59 +487,65 @@ return function(context)
         local contentLayout = Instance.new("UIGradient")
         contentLayout.Color = ColorSequence.new(P.Moss, P.DeepForest)
         contentLayout.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.18),
-            NumberSequenceKeypoint.new(1, 0.05),
+            NumberSequenceKeypoint.new(0, 0.42),
+            NumberSequenceKeypoint.new(1, 0.12),
         })
         contentLayout.Rotation = 90
         contentLayout.Parent = content
 
-        shapes.mossStrip(content, 0, width - theme.rail.width - 1, 0.25)
+        shapes.mossStrip(content, 0, width - theme.rail.width - 1, 0.18)
 
         local pageTitle = prim.text(content, {
             role = "section",
             text = "",
-            position = UDim2.fromOffset(theme.pad.window, 12),
-            size2 = UDim2.new(1, -theme.pad.window * 2, 0, 20),
+            position = UDim2.fromOffset(theme.pad.window, 16),
+            size2 = UDim2.new(1, -theme.pad.window * 2, 0, 22),
         })
         local pageDesc = prim.text(content, {
             role = "sectionDesc",
             text = "",
-            position = UDim2.fromOffset(theme.pad.window, 32),
-            size2 = UDim2.new(1, -theme.pad.window * 2, 0, 16),
+            position = UDim2.fromOffset(theme.pad.window, 39),
+            size2 = UDim2.new(1, -theme.pad.window * 2, 0, 18),
             wrapped = true,
             yAlign = Enum.TextYAlignment.Top,
-            transparency = 0.30,
+            transparency = 0,
         })
         local pageRule = Instance.new("Frame")
         pageRule.Name = "Rule"
         pageRule.BackgroundColor3 = P.Bark
-        pageRule.BackgroundTransparency = 0.3
+        pageRule.BackgroundTransparency = 0.35
         pageRule.BorderSizePixel = 0
-        pageRule.Position = UDim2.fromOffset(theme.pad.window, 54)
+        pageRule.Position = UDim2.fromOffset(theme.pad.window, 64)
         pageRule.Size = UDim2.new(1, -theme.pad.window * 2, 0, 1)
         pageRule.Parent = content
 
         local pageHost = Instance.new("Frame")
         pageHost.Name = "Pages"
         pageHost.BackgroundTransparency = 1
-        pageHost.Position = UDim2.fromOffset(0, 56)
-        pageHost.Size = UDim2.new(1, 0, 1, -56)
+        pageHost.Position = UDim2.fromOffset(0, 70)
+        pageHost.Size = UDim2.new(1, 0, 1, -70)
         pageHost.Parent = content
 
         ------------------------------------------------------------------ rail
-        local searchTablet = shapes.barkTablet(rail, 34, 1)
-        searchTablet.Position = UDim2.fromOffset(10, 10)
-        searchTablet.Size = UDim2.new(1, -20, 0, 34)
-        local searchIcon = shapes.rotatedSquare(searchTablet, 8, P.Bark, nil)
+        local searchTablet = shapes.barkTablet(rail, 38, 1)
+        searchTablet.Position = UDim2.fromOffset(10, 12)
+        searchTablet.Size = UDim2.new(1, -20, 0, 38)
+        local searchIcon = Instance.new("Frame")
+        searchIcon.Name = "SearchIcon"
+        searchIcon.BackgroundColor3 = P.Fern
+        searchIcon.BorderSizePixel = 0
         searchIcon.Position = UDim2.fromOffset(16, 17)
+        searchIcon.Size = UDim2.fromOffset(5, 5)
+        searchIcon.Parent = searchTablet
+        shapes.corner(searchIcon, 999)
         local searchBox = Instance.new("TextBox")
         searchBox.Name = "Search"
         searchBox.BackgroundTransparency = 1
         searchBox.Position = UDim2.fromOffset(30, 0)
         searchBox.Size = UDim2.new(1, -38, 1, 0)
         searchBox.Text = ""
-        searchBox.PlaceholderText = "Search settings"
-        searchBox.PlaceholderColor3 = P.Parchment
+        searchBox.PlaceholderText = "Search controls"
+        searchBox.PlaceholderColor3 = P.Muted
         searchBox.TextColor3 = P.Parchment
         searchBox.TextSize = theme.type.caption
         searchBox.ClearTextOnFocus = false
@@ -527,20 +554,21 @@ return function(context)
         searchBox.Parent = searchTablet
 
         local ropeRail = Instance.new("Frame")
-        ropeRail.Name = "RopeRail"
+        ropeRail.Name = "RailLine"
         ropeRail.BackgroundColor3 = P.Bark
+        ropeRail.BackgroundTransparency = 0.4
         ropeRail.BorderSizePixel = 0
         ropeRail.Position = UDim2.fromOffset(theme.rail.ropeRailX, 58)
-        ropeRail.Size = UDim2.new(0, 2, 1, -150)
+        ropeRail.Size = UDim2.new(0, 1, 1, -150)
         ropeRail.Parent = rail
 
         local tabStrip = Instance.new("Frame")
         tabStrip.Name = "Tabs"
         tabStrip.BackgroundTransparency = 1
-        tabStrip.Position = UDim2.fromOffset(0, 56)
-        tabStrip.Size = UDim2.new(1, 0, 1, -96)
+        tabStrip.Position = UDim2.fromOffset(0, 60)
+        tabStrip.Size = UDim2.new(1, 0, 1, -100)
         tabStrip.Parent = rail
-        prim.vlist(tabStrip, 2)
+        prim.vlist(tabStrip, 4)
 
         local tabs = {}
         local activeTab
@@ -689,7 +717,7 @@ return function(context)
             end
             if instant then
                 pageTitle.TextTransparency = 0
-                pageDesc.TextTransparency = 0.30
+                pageDesc.TextTransparency = 0
             else
                 pageTitle.TextTransparency = 1
                 pageDesc.TextTransparency = 1
@@ -701,7 +729,7 @@ return function(context)
                 TweenService:Create(
                     pageDesc,
                     TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, false, 0.05),
-                    { TextTransparency = 0.30 }
+                    { TextTransparency = 0 }
                 ):Play()
                 if finished then
                     local page = shell.pages[id]
@@ -748,7 +776,8 @@ return function(context)
         ------------------------------------------------------------------ footer
         local footer = Instance.new("Frame")
         footer.Name = "Footer"
-        footer.BackgroundColor3 = P.Bark
+        footer.BackgroundColor3 = P.DeepForest
+        footer.BackgroundTransparency = 0.02
         footer.BorderSizePixel = 0
         footer.AnchorPoint = Vector2.new(0, 1)
         footer.Position = UDim2.new(0, 0, 1, 0)
@@ -756,7 +785,8 @@ return function(context)
         footer.Parent = window
         local footerHairline = Instance.new("Frame")
         footerHairline.Name = "Hairline"
-        footerHairline.BackgroundColor3 = P.Wood
+        footerHairline.BackgroundColor3 = P.Bark
+        footerHairline.BackgroundTransparency = 0.2
         footerHairline.BorderSizePixel = 0
         footerHairline.Size = UDim2.new(1, 0, 0, 1)
         footerHairline.Parent = footer
@@ -764,13 +794,13 @@ return function(context)
         local kbd = Instance.new("Frame")
         kbd.Name = "Keys"
         kbd.BackgroundTransparency = 1
-        kbd.Position = UDim2.fromOffset(10, 0)
-        kbd.Size = UDim2.new(0, 200, 1, 0)
+        kbd.Position = UDim2.fromOffset(14, 0)
+        kbd.Size = UDim2.new(0, 210, 1, 0)
         kbd.Parent = footer
-        prim.hlist(kbd, 6)
+        prim.hlist(kbd, 5)
         for index, text in ipairs({ tostring(config.menuKey or "RightShift"), "Escape" }) do
             local chip = shapes.chip(kbd, text, index)
-            chip.BackgroundTransparency = 0.15
+            chip.BackgroundTransparency = 0
         end
 
         local buildChip = shapes.chip(footer, versionTag, 1)
@@ -1264,15 +1294,23 @@ return function(context)
                 card.Name = "Trailhead"
                 card.Size = UDim2.new(1, 0, 0, 0)
                 card.AutomaticSize = Enum.AutomaticSize.Y
-                card.BackgroundColor3 = P.DeepForest
-                card.BackgroundTransparency = 0.55
+                card.BackgroundColor3 = P.Wood
+                card.BackgroundTransparency = 0.08
                 card.BorderSizePixel = 0
                 card.Parent = welcome
                 shapes.corner(card, theme.radius.stone)
-                shapes.stroke(card, P.Bark, 2)
-                shapes.mossStrip(card, 0, 200, 0.25)
-                shapes.pad(card, 12, 14, 14, 14)
-                prim.vlist(card, 8)
+                shapes.stroke(card, P.Bark, 1)
+                local heroWash = Instance.new("UIGradient")
+                heroWash.Color = ColorSequence.new(P.Moss, P.Wood)
+                heroWash.Rotation = 90
+                heroWash.Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0.18),
+                    NumberSequenceKeypoint.new(1, 0.52),
+                })
+                heroWash.Parent = card
+                shapes.mossStrip(card, 0, 200, 0.05)
+                shapes.pad(card, 16, 18, 16, 18)
+                prim.vlist(card, 10)
 
                 local hello = Instance.new("Frame")
                 hello.Name = "Hello"
@@ -1280,7 +1318,7 @@ return function(context)
                 hello.BackgroundTransparency = 1
                 hello.Parent = card
                 prim.hlist(hello, 0)
-                local welcomeLabel = prim.text(hello, { role = "rowLabel", text = "Welcome, ", layoutOrder = 1, size2 = UDim2.fromOffset(0, 20) })
+                local welcomeLabel = prim.text(hello, { role = "rowLabel", text = "Operator, ", layoutOrder = 1, size2 = UDim2.fromOffset(0, 20) })
                 welcomeLabel.AutomaticSize = Enum.AutomaticSize.X
                 local nameLabel = prim.text(hello, { role = "section", text = "", layoutOrder = 2, size2 = UDim2.fromOffset(0, 20) })
                 nameLabel.AutomaticSize = Enum.AutomaticSize.X
@@ -1308,22 +1346,32 @@ return function(context)
 
                 local rule = Instance.new("Frame")
                 rule.Size = UDim2.new(1, 0, 0, 1)
-                rule.BackgroundColor3 = P.Bark
+                rule.BackgroundColor3 = P.Fern
+                rule.BackgroundTransparency = 0.62
                 rule.BorderSizePixel = 0
                 rule.Parent = card
 
                 local account = Instance.new("Frame")
-                account.Size = UDim2.new(1, 0, 0, 74)
+                account.Size = UDim2.new(1, 0, 0, 78)
                 account.BackgroundTransparency = 1
                 account.Parent = card
                 local avatar = Instance.new("ImageLabel")
                 avatar.Name = "Avatar"
-                avatar.Size = UDim2.fromOffset(72, 72)
+                avatar.Size = UDim2.fromOffset(76, 76)
                 avatar.BackgroundColor3 = P.DeepForest
                 avatar.Image = ""
                 avatar.Parent = account
-                shapes.corner(avatar, theme.radius.plank)
-                shapes.stroke(avatar, P.Bark, 2)
+                shapes.corner(avatar, 14)
+                shapes.stroke(avatar, P.Fern, 1, 0.2)
+                local avatarMark = Instance.new("Frame")
+                avatarMark.Name = "AvatarMark"
+                avatarMark.BackgroundColor3 = P.LeafLight
+                avatarMark.BorderSizePixel = 0
+                avatarMark.AnchorPoint = Vector2.new(1, 1)
+                avatarMark.Position = UDim2.new(1, -6, 1, -6)
+                avatarMark.Size = UDim2.fromOffset(8, 8)
+                avatarMark.Parent = avatar
+                shapes.corner(avatarMark, 999)
                 task.spawn(function()
                     local ok, image = pcall(function()
                         return players:GetUserThumbnailAsync(
@@ -1337,8 +1385,8 @@ return function(context)
                     end
                 end)
                 local column = Instance.new("Frame")
-                column.Position = UDim2.fromOffset(88, 2)
-                column.Size = UDim2.new(1, -88, 1, -2)
+                column.Position = UDim2.fromOffset(92, 2)
+                column.Size = UDim2.new(1, -92, 1, -2)
                 column.BackgroundTransparency = 1
                 column.Parent = account
                 prim.vlist(column, 2)

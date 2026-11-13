@@ -5,4 +5,9 @@ tools/.tmp-tests/
 tools/.test-out.txt
 harvardd.lua
 .freebuff/
+.agents/
+.claude/
+agent/
+skills-lock.json
+New Text Document.txt
 *.tmp

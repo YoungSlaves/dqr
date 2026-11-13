@@ -475,10 +475,6 @@ return function(Context)
         if type(Value) ~= "string" or Value == "" then
             return nil
         end
-        local UserId = Value:match("^userId:(%d+)$")
-        if UserId then
-            return ("https://www.roblox.com/headshot-thumbnail/image?userId=%s&width=420&height=420&format=png"):format(UserId)
-        end
         if Value:match("^%d+$") then
             return "rbxassetid://" .. Value
         end
@@ -606,7 +602,7 @@ return function(Context)
 
         local Rows = {
             { Key = "Name", Label = "NAME", Placeholder = "Display name" },
-            { Key = "PFP", Label = "PFP", Placeholder = "URL, asset id, or userId:123" },
+            { Key = "PFP", Label = "PFP", Placeholder = "Image URL or asset id" },
             { Key = "Level", Label = "LEVEL", Placeholder = "Level" },
             { Key = "Gold", Label = "GOLD", Placeholder = "Gold amount" },
             { Key = "Gems", Label = "GEMS", Placeholder = "Gem amount" },

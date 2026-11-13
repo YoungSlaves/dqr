@@ -235,7 +235,9 @@ return function(context)
             first = false
         end
         render()
-        local hit = shapes.touchTarget(card, 44)
+        -- Keep the invisible target on the outer plank. A child of the row's
+        -- content would be moved to the left by its horizontal UIListLayout.
+        local hit = shapes.touchTarget(card.Parent or card, 44)
         hit.Size = UDim2.fromOffset(44, 44)
         hit.AnchorPoint = Vector2.new(1, 0.5)
         hit.Position = UDim2.new(1, 0, 0.5, 0)
@@ -581,7 +583,7 @@ return function(context)
         value.TextXAlignment = Enum.TextXAlignment.Right
         value.TextTruncate = Enum.TextTruncate.AtEnd
         local chevron = kit.chevron(card)
-        local pressTarget = shapes.touchTarget(card, 44)
+        local pressTarget = shapes.touchTarget(card.Parent or card, 44)
         pressTarget.AnchorPoint = Vector2.new(1, 0.5)
         pressTarget.Position = UDim2.new(1, 0, 0.5, 0)
         pressTarget.Size = UDim2.fromOffset(44, 44)
@@ -1013,7 +1015,7 @@ return function(context)
                 draggingSV, draggingHue = false, false
             end)
         )
-        local press = shapes.touchTarget(card, 44)
+        local press = shapes.touchTarget(card.Parent or card, 44)
         press.AnchorPoint = Vector2.new(1, 0.5)
         press.Position = UDim2.new(1, 0, 0.5, 0)
         press.MouseButton1Click:Connect(function()
@@ -1195,7 +1197,7 @@ return function(context)
                 draggingWheel, draggingBrightness = false, false
             end)
         )
-        local press = shapes.touchTarget(card, 44)
+        local press = shapes.touchTarget(card.Parent or card, 44)
         press.AnchorPoint = Vector2.new(1, 0.5)
         press.Position = UDim2.new(1, 0, 0.5, 0)
         press.MouseButton1Click:Connect(function()

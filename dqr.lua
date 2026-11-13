@@ -4,7 +4,7 @@
 local LOADER_VERSION = 2
 local HEADLESS = true -- no loader card or menu; only the world-space drawing stays
 local OWNER, REPO, BRANCH = "YoungSlaves", "dqr", "main"
-local BASE = ("https://raw.githubusercontent.com/%s/%s/refs/heads/%s/"):format(OWNER, REPO, BRANCH)
+local BASE = ("https://raw.githubusercontent.com/%s/%s/%s/"):format(OWNER, REPO, BRANCH)
 local MANIFEST_URL = BASE .. "modules.json"
 local CACHE_ROOT = "dqr/cache/"
 local CACHE_ORDER = CACHE_ROOT .. "order.txt"

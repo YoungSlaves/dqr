@@ -27,7 +27,7 @@ missing = [p for p in paths if not (ROOT / p).is_file()]
 check(not missing, "manifest files exist", str(missing[:5]))
 check(len(names) == len(set(names)), "manifest module names are unique")
 check(len(paths) == len(set(paths)), "manifest module paths are unique")
-check(manifest.get("version") == "2.0.2", "manifest version is current")
+check(manifest.get("version") == "2.0.3", "manifest version is current")
 
 source_files = {p.relative_to(ROOT).as_posix() for p in (ROOT / "src").rglob("*.lua")}
 listed = set(paths)

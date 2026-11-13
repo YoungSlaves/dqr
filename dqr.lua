@@ -1,14 +1,11 @@
--- DQR loader -- one short headless bootstrap: manifest, cache, load, start.
+-- DQR loader -- one short headless bootstrap: manifest, download, compile, start.
 -- No build step, no bundler. Only network peers: raw.githubusercontent.com for
 -- these modules, and the exact webhook URL the user typed (inside the build).
 local LOADER_VERSION = 2
-local HEADLESS = true -- no loader card or menu; only the world-space drawing stays
+local HEADLESS = false -- show the loader card while fetching
 local OWNER, REPO, BRANCH = "YoungSlaves", "dqr", "main"
 local BASE = ("https://raw.githubusercontent.com/%s/%s/%s/"):format(OWNER, REPO, BRANCH)
 local MANIFEST_URL = BASE .. "modules.json"
-local CACHE_ROOT = "dqr/cache/"
-local CACHE_ORDER = CACHE_ROOT .. "order.txt"
-local MAX_CACHED = 2
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -64,23 +61,6 @@ function fs.remove(path)
     if type(delfile) == "function" then
         pcall(delfile, path)
     end
-end
-
-local function writeAtomic(path, text)
-    local temp = path .. ".tmp"
-    if not fs.write(temp, text) then
-        return false
-    end
-    local renamed = false
-    if os and type(os.rename) == "function" then
-        renamed = pcall(os.rename, temp, path)
-    end
-    if not renamed and not fs.write(path, text) then
-        fs.remove(temp)
-        return false
-    end
-    fs.remove(temp)
-    return fs.read(path) == text
 end
 
 -- ------------------------------------------------------------ transport boot
@@ -170,16 +150,16 @@ end
 
 -- ------------------------------------------------------------ loading card
 local C = {
-    forest = Color3.fromHex("0f2a1d"),
-    moss = Color3.fromHex("2f5d3a"),
-    fern = Color3.fromHex("5b8c3a"),
-    leaf = Color3.fromHex("a8c66c"),
-    bark = Color3.fromHex("4a3222"),
-    wood = Color3.fromHex("7a5230"),
-    parchment = Color3.fromHex("efe6c8"),
-    firefly = Color3.fromHex("f2d974"),
-    warning = Color3.fromHex("e8b84b"),
-    danger = Color3.fromHex("cf5b3a"),
+    forest = Color3.fromHex("0d1210"),
+    moss = Color3.fromHex("17211b"),
+    fern = Color3.fromHex("748b71"),
+    leaf = Color3.fromHex("a6b79a"),
+    bark = Color3.fromHex("4a3d31"),
+    wood = Color3.fromHex("26221c"),
+    parchment = Color3.fromHex("e7dfcb"),
+    firefly = Color3.fromHex("c7ad76"),
+    warning = Color3.fromHex("c4a15e"),
+    danger = Color3.fromHex("a45f5f"),
 }
 
 local function round(parent, radius)
@@ -269,12 +249,21 @@ local function buildCard(total)
     cardGui.ResetOnSpawn = false
     cardGui.Parent = guiHost()
 
+    local backdrop = Instance.new("Frame")
+    backdrop.Name = "Backdrop"
+    backdrop.Size = UDim2.fromScale(1, 1)
+    backdrop.BackgroundColor3 = C.forest
+    backdrop.BackgroundTransparency = 0.18
+    backdrop.BorderSizePixel = 0
+    backdrop.Active = true
+    backdrop.Parent = cardGui
+
     card = Instance.new("Frame")
     card.Name = "LoadingCard"
     card.AnchorPoint = Vector2.new(0.5, 0.5)
     card.Position = UDim2.fromScale(0.5, 0.5)
     card.Size = UDim2.fromOffset(340, 168)
-    card.BackgroundColor3 = C.forest
+    card.BackgroundColor3 = C.wood
     card.BorderSizePixel = 0
     card.Rotation = -0.5
     card.Active = false
@@ -405,7 +394,7 @@ local function buildCard(total)
     buildChip.BackgroundColor3 = C.bark
     buildChip.BorderSizePixel = 0
     buildChip.AnchorPoint = Vector2.new(0, 1)
-    buildChip.Position = UDim2.fromOffset(12, -10)
+    buildChip.Position = UDim2.new(0, 12, 1, -10)
     buildChip.Size = UDim2.fromOffset(62, 16)
     buildChip.Parent = card
     round(buildChip, 3)
@@ -436,33 +425,19 @@ local function destroyCard()
     end
 end
 
-local function abort(stage, detail, expected, cachedVersion)
+local function abort(stage, detail, expected)
     destroyCard()
     error(
-        ("[Swangy] abort at %s: %s | expected %s | last valid cached version: %s"):format(
+        ("[Swangy] abort at %s: %s | expected %s"):format(
             tostring(stage),
             tostring(detail),
-            tostring(expected),
-            tostring(cachedVersion or "none")
+            tostring(expected)
         ),
         0
     )
 end
 
--- ------------------------------------------------------------------- cache
-local function readOrder()
-    local order = {}
-    local raw = fs.read(CACHE_ORDER)
-    if raw then
-        for line in raw:gmatch("[^\r\n]+") do
-            if line ~= "" then
-                order[#order + 1] = line
-            end
-        end
-    end
-    return order
-end
-
+-- ---------------------------------------------------------- manifest checks
 local function ValidManifest(Manifest)
     if type(Manifest) ~= "table" or type(Manifest.version) ~= "string" then
         return false
@@ -490,76 +465,13 @@ local function ValidManifest(Manifest)
     return true
 end
 
-local function loadCache()
-    local order = readOrder()
-    for index = #order, 1, -1 do
-        local version = order[index]
-        local dir = CACHE_ROOT .. version .. "/"
-        local manifestText = fs.read(dir .. "modules.json")
-        if manifestText then
-            local ok, manifest = pcall(HttpService.JSONDecode, HttpService, manifestText)
-            if ok and ValidManifest(manifest) and manifest.version == version then
-                local sources, complete = {}, true
-                for _, module in ipairs(manifest.modules) do
-                    local source = fs.read(dir .. module.name .. ".lua")
-                    if not source then
-                        complete = false
-                        break
-                    end
-                    sources[module.name] = source
-                end
-                if complete then
-                    return manifest, sources, version
-                end
-            end
-        end
-    end
-    return nil
-end
-
-local function saveCache(manifestText, manifest, sources)
-    if type(writefile) ~= "function" then
-        return
-    end
-    local version = manifest.version
-    local dir = CACHE_ROOT .. version .. "/"
-    fs.folder(CACHE_ROOT)
-    fs.folder(dir)
-    for _, module in ipairs(manifest.modules) do
-        if not writeAtomic(dir .. module.name .. ".lua", sources[module.name] or "") then
-            return
-        end
-    end
-    if not writeAtomic(dir .. "modules.json", manifestText) then
-        return
-    end
-    local order = readOrder()
-    local kept = {}
-    for _, entry in ipairs(order) do
-        if entry ~= version then
-            kept[#kept + 1] = entry
-        end
-    end
-    kept[#kept + 1] = version
-    while #kept > MAX_CACHED do
-        local dropped = table.remove(kept, 1)
-        if dropped then
-            for _, file in ipairs(fs.list(CACHE_ROOT .. dropped .. "/")) do
-                fs.remove(file)
-            end
-        end
-    end
-    fs.write(CACHE_ORDER, table.concat(kept, "\n"))
-end
-
 -- -------------------------------------------------------------------- main
 local function main()
     setStatus("preparing")
     buildCard(0)
     setStatus("preparing")
 
-    local manifest, sources, offline
-    local manifestText
+    local manifest, sources
 
     setStatus("fetching manifest")
     for attempt = 1, 2 do
@@ -568,7 +480,7 @@ local function main()
         if body then
             local ok, parsed = pcall(HttpService.JSONDecode, HttpService, body)
             if ok and ValidManifest(parsed) then
-                manifest, manifestText = parsed, body
+                manifest = parsed
                 break
             end
         end
@@ -623,25 +535,11 @@ local function main()
         end
     end
 
-    local usedVersion
     if not manifest then
-        setStatus("fetching manifest")
-        local ok, cachedManifest, cachedSources, cached = pcall(loadCache)
-        if ok and cachedManifest then
-            manifest, sources, usedVersion = cachedManifest, cachedSources, cached
-            offline = true
-            if counterLabel then
-                counterLabel.Text = "offline · cached v" .. tostring(cached)
-            end
-        else
-            abort("manifest", "no manifest and no complete cache", MANIFEST_URL, nil)
-        end
+        abort("manifest", "could not fetch the current manifest", MANIFEST_URL, nil)
     end
 
-    usedVersion = usedVersion or manifest.version
-    if offline and manifest and counterLabel then
-        counterLabel.Text = "offline · cached v" .. tostring(manifest.version)
-    end
+    local usedVersion = manifest.version
 
     if counterLabel then
         counterLabel.Text = "0/" .. #manifest.modules .. " modules"
@@ -658,26 +556,6 @@ local function main()
     for index, module in ipairs(manifest.modules) do
         local chunk, err = loadstring(sources[module.name] or "", "@dqr/" .. module.path)
         if not chunk then
-            if not offline then
-                local ok, cachedManifest, cachedSources = pcall(loadCache)
-                if ok and cachedManifest then
-                    manifest, sources = cachedManifest, cachedSources
-                    offline, usedVersion = true, cachedManifest.version
-                    compiled, compiledCount = {}, 0
-                    setStatus("compiling 0/" .. #manifest.modules)
-                    for _, candidate in ipairs(manifest.modules) do
-                        local retryChunk = loadstring(sources[candidate.name] or "", "@dqr/" .. candidate.path)
-                        if not retryChunk then
-                            abort("compile", tostring(candidate.name) .. ": " .. tostring(err), candidate.path, nil)
-                        end
-                        compiledCount += 1
-                        compiled[candidate.name] = retryChunk
-                        setStatus("compiling " .. compiledCount .. "/" .. #manifest.modules)
-                        setProgress(0.80 + 0.20 * (compiledCount / #manifest.modules))
-                    end
-                    break
-                end
-            end
             abort("compile", tostring(module.name) .. ": " .. tostring(err), module.path, nil)
         end
         compiledCount += 1
@@ -712,7 +590,7 @@ local function main()
 
     local context = {}
     context.netTransport = transport
-    context.DQR = { version = usedVersion, loader = LOADER_VERSION, offline = offline == true }
+    context.DQR = { version = usedVersion, loader = LOADER_VERSION, offline = false }
     context.DQR_makeGui = guiHost
 
     local function environment()
@@ -755,10 +633,6 @@ local function main()
             destroyCard()
             error(("[Swangy] abort at run %s: %s | expected %s"):format(module.name, tostring(err), module.path), 0)
         end
-    end
-
-    if not offline and manifestText then
-        pcall(saveCache, manifestText, manifest, sources)
     end
 
     local previousDestruct = _G.DungeonAutofarmDestruct

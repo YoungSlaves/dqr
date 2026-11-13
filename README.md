@@ -24,7 +24,7 @@ _G.DungeonAutofarmDestruct()
 
 | Path | Purpose |
 |---|---|
-| `dqr.lua` | loader, cache, module download and compile gate |
+| `dqr.lua` | loading screen, fresh module download and compile gate |
 | `modules.json` | ordered module manifest |
 | `src/core` | shared services and the only transport resolver |
 | `src/features` | automation, combat, webhook, drawing, and wall modules |

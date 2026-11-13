@@ -238,15 +238,13 @@ return function(context)
         -- Keep the invisible target on the outer plank. A child of the row's
         -- content would be moved to the left by its horizontal UIListLayout.
         local hit = shapes.touchTarget(card.Parent or card, 44)
-        hit.Size = UDim2.fromOffset(44, 44)
-        hit.AnchorPoint = Vector2.new(1, 0.5)
-        hit.Position = UDim2.new(1, 0, 0.5, 0)
+        hit.Size = UDim2.fromScale(1, 1)
+        hit.BackgroundTransparency = 1
         hit.MouseButton1Click:Connect(function()
             setter(not getter())
             render()
         end)
         prim.tip(hit, tooltip)
-        prim.tip(card, tooltip)
         return { row = card, render = render }
     end
 
@@ -584,9 +582,8 @@ return function(context)
         value.TextTruncate = Enum.TextTruncate.AtEnd
         local chevron = kit.chevron(card)
         local pressTarget = shapes.touchTarget(card.Parent or card, 44)
-        pressTarget.AnchorPoint = Vector2.new(1, 0.5)
-        pressTarget.Position = UDim2.new(1, 0, 0.5, 0)
-        pressTarget.Size = UDim2.fromOffset(44, 44)
+        pressTarget.Size = UDim2.fromScale(1, 1)
+        pressTarget.BackgroundTransparency = 1
 
         local menu = Instance.new("Frame")
         menu.Name = "Menu"
@@ -1016,12 +1013,12 @@ return function(context)
             end)
         )
         local press = shapes.touchTarget(card.Parent or card, 44)
-        press.AnchorPoint = Vector2.new(1, 0.5)
-        press.Position = UDim2.new(1, 0, 0.5, 0)
+        press.Size = UDim2.fromScale(1, 1)
+        press.BackgroundTransparency = 1
         press.MouseButton1Click:Connect(function()
             picker.Visible = not picker.Visible
         end)
-        prim.tip(card, tooltip)
+        prim.tip(press, tooltip)
         return { holder = holder, render = render }
     end
 
@@ -1198,12 +1195,12 @@ return function(context)
             end)
         )
         local press = shapes.touchTarget(card.Parent or card, 44)
-        press.AnchorPoint = Vector2.new(1, 0.5)
-        press.Position = UDim2.new(1, 0, 0.5, 0)
+        press.Size = UDim2.fromScale(1, 1)
+        press.BackgroundTransparency = 1
         press.MouseButton1Click:Connect(function()
             picker.Visible = not picker.Visible
         end)
-        prim.tip(card, tooltip)
+        prim.tip(press, tooltip)
         return { holder = holder, render = render }
     end
 

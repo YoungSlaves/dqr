@@ -1358,9 +1358,7 @@ return function(context)
             holder = section,
             content = content,
             setOpen = function(value, instant)
-                if not value then
-                    setOpen(false, instant)
-                end
+                setOpen(value, instant)
             end,
             isOpen = function()
                 return open

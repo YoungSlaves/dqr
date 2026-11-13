@@ -485,6 +485,7 @@ return function(Context)
                     Stats.Kills = math.max(Stats.Kills, (tonumber(WH.mobKills) or 0) + (tonumber(WH.bossKills) or 0))
                     Stats.Wins = tonumber(WH.wins) or Stats.Wins
                     Stats.Losses = tonumber(WH.losses) or Stats.Losses
+                    Stats.Runs = math.max(Stats.Runs, Stats.Wins + Stats.Losses)
                 elseif Started and Started.Value and Stats.RunJob ~= game.JobId then
                     Stats.RunJob = game.JobId
                     Stats.Runs += 1

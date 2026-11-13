@@ -541,6 +541,9 @@ return function(Context)
         RT.BlackScreen = Enabled
         Context.SWANGY.Automation = Context.SWANGY.Automation or {}
         Context.SWANGY.Automation.BlackScreen = Enabled
+        if RunService and RunService.Set3dRenderingEnabled then
+            pcall(RunService.Set3dRenderingEnabled, RunService, not Enabled)
+        end
         if Enabled then
             if not BlackGui or not BlackGui.Parent then
                 BuildBlackScreen()
@@ -578,7 +581,7 @@ return function(Context)
         Rail.AnchorPoint = Vector2.new(1, 0)
         Rail.Position = UDim2.new(1, -14, 0, 54)
         local Automation = Context.SWANGY.Automation or {}
-        local SavedPosition = Automation.ControlPosition or Automation.ButtonPosition
+        local SavedPosition = Automation.ControlPosition
         if type(SavedPosition) == "table" and tonumber(SavedPosition.X) and tonumber(SavedPosition.Y) then
             Rail.AnchorPoint = Vector2.new(0, 0)
             Rail.Position = UDim2.fromOffset(SavedPosition.X, SavedPosition.Y)
@@ -672,7 +675,7 @@ return function(Context)
         end)
 
         Context.toggleDragConnections = {}
-        AddDrag(PowerButton, Rail, "ButtonPosition", Context.toggleDragConnections)
+        AddDrag(PowerButton, Rail, "ControlPosition", Context.toggleDragConnections)
         SetPerformance(CFG.performanceMode ~= false, false)
         PowerButton.Text = Context.headlessEnabled and "POWER ON" or "POWER OFF"
         PowerButton.BackgroundColor3 = Context.headlessEnabled and Color3.fromRGB(27, 63, 53)
@@ -809,6 +812,7 @@ return function(Context)
             Label.AutomaticSize = Enum.AutomaticSize.X
             Label.Size = UDim2.new(0, 0, 1, 0)
             Label.RichText = true
+            Label.TextColor3 = Color3.fromRGB(242, 245, 250)
             Label.Text = ("<font color=\"#778191\">%s</font>  <font color=\"#F2F5FA\">0</font>"):format(Name)
             Label.TextSize = 11
             Label.Font = Enum.Font.GothamMedium
@@ -917,6 +921,9 @@ return function(Context)
     BuildHUD()
     if RT.BlackScreen then
         BuildBlackScreen()
+        if RunService and RunService.Set3dRenderingEnabled then
+            pcall(RunService.Set3dRenderingEnabled, RunService, false)
+        end
     end
 
     task.spawn(function()
@@ -1041,6 +1048,9 @@ return function(Context)
             pcall(BlackGui.Destroy, BlackGui)
             BlackGui = nil
             Context.blackGui = nil
+        end
+        if RunService and RunService.Set3dRenderingEnabled then
+            pcall(RunService.Set3dRenderingEnabled, RunService, true)
         end
     end
 

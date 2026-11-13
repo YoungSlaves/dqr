@@ -7,7 +7,7 @@ return function(context)
     local visualRoot = context.visualRoot
     local runtimeState, sharedValue =
         context.RT,
-        { parts = {}, nodes = {}, spots = {}, scan = {}, ring = {}, groups = {}, tags = {}, wallTags = {} }
+        { parts = {}, nodes = {}, spots = {}, scan = {}, ring = {}, groups = {}, tags = {}, wallTags = {}, pathLines = {}, grid = {} }
     sharedValue.lastDraw = -math.huge
     sharedValue.lastSweep = -math.huge
     sharedValue.list = {}
@@ -30,7 +30,7 @@ return function(context)
         part.CanQuery = false
         part.CanTouch = false
         part.CastShadow = false
-        part.Material = Enum.Material.Neon
+        part.Material = Enum.Material.SmoothPlastic
         part.Transparency = transparency
         part.Parent = parent
         return part
@@ -220,11 +220,45 @@ return function(context)
         local value = argument[argument2]
         if if value then not value.Parent else not value then
             value = helper2(helper(), "node", argument6)
-            value.Shape = Enum.PartType.Ball
+            value.Shape = Enum.PartType.Block
             argument[argument2] = value
         end
         argument4 = math.max(argument4 * (config.markerScale or 1), 0.55)
-        helper3(value, argument4, argument4, argument4, argument3, argument6, CFrame.new(argument5))
+        -- Flat ink-like bars replace the old glowing balls. Rotating each dash
+        -- keeps the path reading as a drawn route instead of a bead chain.
+        helper3(
+            value,
+            argument4 * 2.2,
+            0.06,
+            0.16,
+            argument3,
+            argument6,
+            CFrame.new(argument5) * CFrame.Angles(0, math.rad(35), 0)
+        )
+    end
+
+    local function helperLine(argument, argument2, argument3, argument4, argument5, argument6, argument7)
+        local delta = argument4 - argument3
+        local length = delta.Magnitude
+        if length < 0.05 then
+            return argument2
+        end
+        local value = argument[argument2]
+        if if value then not value.Parent else not value then
+            value = helper2(helper(), "pathLine", argument7)
+            value.Shape = Enum.PartType.Block
+            argument[argument2] = value
+        end
+        helper3(
+            value,
+            argument6 or 0.08,
+            0.04,
+            length,
+            argument5,
+            argument7,
+            CFrame.lookAt((argument3 + argument4) * 0.5, argument4)
+        )
+        return argument2
     end
     local function helper10(argument, argument2)
         for index = #argument, argument2 + 1, -1 do
@@ -253,6 +287,60 @@ return function(context)
             end
         end
     end
+    -- Thin floor grid drawn around the local character. It replaces the old
+    -- scattered dot markers with a stable frame that highlights can sit on.
+    -- The grid follows the player but stays a world-space reference, not a HUD.
+    local function drawGrid(vector)
+        if config.drawGrid == false or not vector then
+            return
+        end
+        local step = math.clamp(tonumber(config.gridStep) or 6, 2, 20)
+        local radius = math.clamp(tonumber(config.gridRadius) or 96, step * 2, 300)
+        local centerX = math.floor(vector.X / step + 0.5) * step
+        local centerZ = math.floor(vector.Z / step + 0.5) * step
+        local floorY = vector.Y - 2.37
+        local color = config.colorGrid or Color3.fromRGB(74, 81, 72)
+        local transparency = tonumber(config.gridTransparency) or 0.72
+        local half = math.floor(radius / step)
+        local parts = sharedValue.grid
+        local count = 0
+        for offset = -half, half, 1 do
+            count += 1
+            local horizontal = parts[count]
+            if if horizontal then not horizontal.Parent else not horizontal then
+                horizontal = helper2(helper(), "gridLine", transparency)
+                horizontal.Shape = Enum.PartType.Block
+                parts[count] = horizontal
+            end
+            helper3(
+                horizontal,
+                radius * 2,
+                0.05,
+                0.06,
+                color,
+                transparency,
+                CFrame.new(centerX, floorY, centerZ + offset * step)
+            )
+            count += 1
+            local vertical = parts[count]
+            if if vertical then not vertical.Parent else not vertical then
+                vertical = helper2(helper(), "gridLine", transparency)
+                vertical.Shape = Enum.PartType.Block
+                parts[count] = vertical
+            end
+            helper3(
+                vertical,
+                0.06,
+                0.05,
+                radius * 2,
+                color,
+                transparency,
+                CFrame.new(centerX + offset * step, floorY, centerZ)
+            )
+        end
+        helper10(parts, count)
+    end
+
     -- DQR section 8 label plate: DeepForest @0.70, 4px radius, 1px Bark
     -- hairline, 11px body text with a 1px DeepForest outline.
     local function helper11(parent, textColor3)
@@ -464,9 +552,9 @@ return function(context)
             aoeMarker.CanQuery = false
             aoeMarker.CanTouch = false
             aoeMarker.CastShadow = false
-            aoeMarker.Material = Enum.Material.Neon
+            aoeMarker.Material = Enum.Material.SmoothPlastic
             aoeMarker.Transparency = 0.72
-            aoeMarker.Color = config.colorAbility or Color3.fromRGB(255, 105, 180)
+            aoeMarker.Color = config.colorAbility or Color3.fromRGB(163, 95, 82)
             aoeMarker.Parent = helper16()
             sharedValue.aoeMark = aoeMarker
         end
@@ -474,8 +562,8 @@ return function(context)
             value6, value5 =
                 runtimeState.coverN or 0,
                 tostring(runtimeState.attackState or ""):find("cooldown", 1, true) ~= nil
-            aoeMarker.Color = value6 > 0 and not value5 and Color3.fromRGB(80, 255, 120)
-                or value6 > 0 and Color3.fromRGB(255, 220, 80)
+            aoeMarker.Color = value6 > 0 and not value5 and Color3.fromRGB(135, 155, 130)
+                or value6 > 0 and Color3.fromRGB(194, 161, 100)
                 or Color3.fromRGB(150, 150, 160)
             aoeMarker.Transparency = value6 > 0 and 0.6 or 0.8
         end
@@ -526,7 +614,7 @@ return function(context)
                 aoeScan3.CanQuery = false
                 aoeScan3.CanTouch = false
                 aoeScan3.CastShadow = false
-                aoeScan3.Material = Enum.Material.Neon
+                aoeScan3.Material = Enum.Material.SmoothPlastic
                 aoeScan3.Parent = helper16()
                 aoeScan[value4] = aoeScan3
             end
@@ -538,7 +626,7 @@ return function(context)
             if (index3 - 1) % value == 0 or index3 == aoeScan2.best then
                 local value7, value8 = index3 == aoeScan2.best, value3 > 0 and value6.n / value3 or 0
                 local color, value9 =
-                    value7 and Color3.fromRGB(255, 240, 120) or Color3.fromRGB(
+                    value7 and Color3.fromRGB(194, 177, 120) or Color3.fromRGB(
                         60 + math.floor(value8 * 60),
                         90 + math.floor(value8 * 165),
                         140 + math.floor(value8 * 40)
@@ -659,20 +747,19 @@ return function(context)
                     if not (groupOrb and groupOrb.Parent) then
                         groupOrb = Instance.new("Part")
                         groupOrb.Name = "groupOrb"
-                        groupOrb.Shape = Enum.PartType.Ball
+                        groupOrb.Shape = Enum.PartType.Block
                         groupOrb.Anchored = true
                         groupOrb.CanCollide = false
                         groupOrb.CanQuery = false
                         groupOrb.CanTouch = false
                         groupOrb.CastShadow = false
-                        groupOrb.Material = Enum.Material.Neon
+                        groupOrb.Material = Enum.Material.SmoothPlastic
                         groupOrb.Parent = helper15()
                         orbs[entry.model] = groupOrb
                     end
-                    groupOrb.Size = value6 and Vector3.new(value3 * 1.4, value3 * 1.4, value3 * 1.4)
-                        or Vector3.new(value3, value3, value3)
+                    groupOrb.Size = Vector3.new(0.12, value3 * (value6 and 3 or 2.2), 0.12)
                     groupOrb.Transparency = (value6 or value) and 0 or 1
-                    groupOrb.Color = value6 and (config.colorTagged or Color3.fromRGB(60, 255, 110))
+                    groupOrb.Color = value6 and (config.colorTagged or Color3.fromRGB(126, 151, 122))
                         or value and value.colour
                         or Color3.new(1, 1, 1)
                     groupOrb.CFrame = CFrame.new(entry.root.Position + Vector3.new(0, value4, 0))
@@ -706,7 +793,7 @@ return function(context)
                                 text = toString(value9 or "?")
                             end
                             textControl.Text = text
-                            textControl.TextColor3 = value6 and Color3.fromRGB(120, 255, 140)
+                            textControl.TextColor3 = value6 and Color3.fromRGB(166, 183, 154)
                                 or value and value.colour
                                 or Color3.new(1, 1, 1)
                         end
@@ -745,7 +832,7 @@ return function(context)
                             local value2, arenaCentre, color, value3, value4 =
                                 config.missileLaneLen or 600,
                                 hazardReader.arenaCentre,
-                                config.colorMissileLine or Color3.fromRGB(60, 255, 90),
+                                config.colorMissileLine or Color3.fromRGB(126, 151, 122),
                                 (missileLines.y or 0) - 2.3,
                                 value
                             for index, line in ipairs(missileLines.lines) do
@@ -768,7 +855,7 @@ return function(context)
                                     index.CanQuery = false
                                     index.CanTouch = false
                                     index.CastShadow = false
-                                    index.Material = Enum.Material.Neon
+                                    index.Material = Enum.Material.SmoothPlastic
                                     index.Parent = helper21()
                                     mLines[value4] = index
                                 end
@@ -811,7 +898,7 @@ return function(context)
                                 local value3 = value2 and value2.Position.Y - 2.3 or nil
                                 local blueRail, color, value4, value5 =
                                     value3 and context.OD.blueArcs(os.clock()) or {},
-                                    config.colorBlueRail or Color3.fromRGB(70, 150, 255),
+                                    config.colorBlueRail or Color3.fromRGB(110, 133, 148),
                                     config.blueRailSegments or 18,
                                     value
                                 for index, entry in ipairs(blueRail) do
@@ -839,7 +926,7 @@ return function(context)
                                                 index2.CanQuery = false
                                                 index2.CanTouch = false
                                                 index2.CastShadow = false
-                                                index2.Material = Enum.Material.Neon
+                                                index2.Material = Enum.Material.SmoothPlastic
                                                 index2.Parent = helper21()
                                                 bLines[value5] = index2
                                             end
@@ -872,12 +959,12 @@ return function(context)
                                                 blueRail.CanQuery = false
                                                 blueRail.CanTouch = false
                                                 blueRail.CastShadow = false
-                                                blueRail.Material = Enum.Material.Neon
+                                                blueRail.Material = Enum.Material.SmoothPlastic
                                                 blueRail.Parent = helper21()
                                                 bLines[value2] = blueRail
                                             end
                                             blueRail.Size = Vector3.new(0.3, 3, 3)
-                                            blueRail.Color = Color3.fromRGB(120, 255, 230)
+                                            blueRail.Color = Color3.fromRGB(154, 181, 165)
                                             blueRail.Transparency = 0
                                             blueRail.CFrame = CFrame.new(color.x, value3, color.z)
                                                 * CFrame.Angles(0, 0, 1.5707963267948966)
@@ -918,7 +1005,7 @@ return function(context)
                             if value3 then
                                 local value4, color, value5 =
                                     math.min(bobLines.halfL * 2, config.bobRailDrawLen or 160),
-                                    config.colorMissileLine or Color3.fromRGB(60, 255, 90),
+                                    config.colorMissileLine or Color3.fromRGB(126, 151, 122),
                                     value
                                 for index, line in ipairs(bobLines.lines) do
                                     value5 += 1
@@ -931,7 +1018,7 @@ return function(context)
                                         index.CanQuery = false
                                         index.CanTouch = false
                                         index.CastShadow = false
-                                        index.Material = Enum.Material.Neon
+                                        index.Material = Enum.Material.SmoothPlastic
                                         index.Parent = helper21()
                                         bobRailParts[value5] = index
                                     end
@@ -995,7 +1082,7 @@ return function(context)
                     fanBeam.CanQuery = false
                     fanBeam.CanTouch = false
                     fanBeam.CastShadow = false
-                    fanBeam.Material = Enum.Material.Neon
+                    fanBeam.Material = Enum.Material.SmoothPlastic
                     fanBeam.Parent = helper21()
                     fanParts[value] = fanBeam
                 end
@@ -1033,7 +1120,7 @@ return function(context)
                                 value10 - value8,
                                 0.3,
                                 value5 + 0.1,
-                                config.colorRuneRing or Color3.fromRGB(255, 205, 90),
+                                config.colorRuneRing or Color3.fromRGB(199, 173, 118),
                                 0.35
                             )
                         end
@@ -1048,7 +1135,7 @@ return function(context)
                         value3.az,
                         value3.halfW * 2,
                         value3.halfL * 2,
-                        config.colorFanRed or Color3.fromRGB(255, 45, 45),
+                        config.colorFanRed or Color3.fromRGB(164, 95, 95),
                         0.4
                     )
                 end
@@ -1061,7 +1148,7 @@ return function(context)
                         value3.az,
                         value3.halfW * 2,
                         value3.halfL * 2,
-                        config.colorFanGreen or Color3.fromRGB(60, 235, 95),
+                        config.colorFanGreen or Color3.fromRGB(126, 151, 122),
                         0.4
                     )
                 end
@@ -1103,7 +1190,7 @@ return function(context)
                         orbitRing.CanQuery = false
                         orbitRing.CanTouch = false
                         orbitRing.CastShadow = false
-                        orbitRing.Material = Enum.Material.Neon
+                        orbitRing.Material = Enum.Material.SmoothPlastic
                         orbitRing.Parent = helper21()
                         orbParts[value] = orbitRing
                     end
@@ -1156,7 +1243,7 @@ return function(context)
                     end
                 end
                 local value11, value12 =
-                    value2.mode == "gather" and Color3.fromRGB(255, 160, 50) or Color3.fromRGB(185, 105, 255),
+                    value2.mode == "gather" and Color3.fromRGB(184, 139, 84) or Color3.fromRGB(139, 121, 150),
                     value2.Reff or value2.R
                 helper26(value2.x, value2.z, value12, value11, 0.5, 0.1, config.orbitRingSegments or 36)
                 if value2.Reff then
@@ -1172,8 +1259,8 @@ return function(context)
                         )
                     end
                 end
-                helper26(value2.x, value2.z, value2.sr, Color3.fromRGB(255, 255, 255), 0.25, 0.5, 24)
-                helper26(value2.ax, value2.az, value2.ar, Color3.fromRGB(255, 230, 60), 0.3, 0.25, 24)
+                helper26(value2.x, value2.z, value2.sr, Color3.fromRGB(231, 223, 203), 0.25, 0.5, 24)
+                helper26(value2.ax, value2.az, value2.ar, Color3.fromRGB(199, 176, 111), 0.3, 0.25, 24)
                 helper3(helper19(), 0.6, 4, 0.6, value11, 0.1, CFrame.new(value2.x, value4 + 2, value2.z))
             end
         end
@@ -1213,7 +1300,7 @@ return function(context)
                         orbitRing2.CanQuery = false
                         orbitRing2.CanTouch = false
                         orbitRing2.CastShadow = false
-                        orbitRing2.Material = Enum.Material.Neon
+                        orbitRing2.Material = Enum.Material.SmoothPlastic
                         orbitRing2.Parent = helper21()
                         orbParts[value] = orbitRing2
                     end
@@ -1223,7 +1310,7 @@ return function(context)
                         0.5,
                         0.2,
                         value14 + 0.05,
-                        Color3.fromRGB(255, 215, 40),
+                        Color3.fromRGB(199, 176, 111),
                         0.1,
                         CFrame.lookAt(
                             Vector3.new((vector.X + vector2.X) * 0.5, value20, (vector.Z + vector2.Z) * 0.5),
@@ -1264,7 +1351,7 @@ return function(context)
                         argument7.CanQuery = false
                         argument7.CanTouch = false
                         argument7.CastShadow = false
-                        argument7.Material = Enum.Material.Neon
+                        argument7.Material = Enum.Material.SmoothPlastic
                         argument7.Parent = helper21()
                         orbParts[value] = argument7
                     end
@@ -1292,7 +1379,7 @@ return function(context)
                             entry[3],
                             entry[4],
                             0.4,
-                            Color3.fromRGB(165, 70, 255),
+                            Color3.fromRGB(128, 108, 138),
                             "orbitWallLine",
                             entry[5] and entry[5] + 0.7 or nil
                         )
@@ -1306,7 +1393,7 @@ return function(context)
                             node[1] + 0.8,
                             node[2],
                             1.6,
-                            Color3.fromRGB(255, 215, 40),
+                            Color3.fromRGB(199, 176, 111),
                             "orbitNode"
                         )
                     end
@@ -1330,7 +1417,7 @@ return function(context)
                                 orbitOutline.CanQuery = false
                                 orbitOutline.CanTouch = false
                                 orbitOutline.CastShadow = false
-                                orbitOutline.Material = Enum.Material.Neon
+                                orbitOutline.Material = Enum.Material.SmoothPlastic
                                 orbitOutline.Parent = helper21()
                                 orbParts[value] = orbitOutline
                             end
@@ -1339,7 +1426,7 @@ return function(context)
                                 0.4,
                                 0.2,
                                 index5 + 0.05,
-                                Color3.fromRGB(165, 70, 255),
+                                Color3.fromRGB(128, 108, 138),
                                 0.1,
                                 CFrame.lookAt(
                                     Vector3.new(
@@ -1355,7 +1442,7 @@ return function(context)
                 end
             end
             if config.drawOrbitArrow ~= false and value13.i0 and value13.dir and #value15 >= 3 then
-                local color = Color3.fromRGB(255, 255, 255)
+                local color = Color3.fromRGB(231, 223, 203)
                 local function helper28(vector3, vector4, argument)
                     local value5 = math.sqrt((vector4.X - vector3.X) ^ 2 + (vector4.Z - vector3.Z) ^ 2)
                     if value5 < 0.05 then
@@ -1371,7 +1458,7 @@ return function(context)
                         orbitArrow.CanQuery = false
                         orbitArrow.CanTouch = false
                         orbitArrow.CastShadow = false
-                        orbitArrow.Material = Enum.Material.Neon
+                        orbitArrow.Material = Enum.Material.SmoothPlastic
                         orbitArrow.Parent = helper21()
                         orbParts[value] = orbitArrow
                     end
@@ -1467,6 +1554,7 @@ return function(context)
         "drawAoeScan",
         "drawBubble",
         "drawGroups",
+        "drawGrid",
         "drawHazards",
         "drawLeads",
         "drawNoGo",
@@ -1656,6 +1744,8 @@ return function(context)
                             sharedValue.groups,
                             sharedValue.nodes,
                             sharedValue.spots,
+                            sharedValue.pathLines,
+                            sharedValue.grid,
                             sharedValue.scan,
                             sharedValue.tags,
                             sharedValue.wallTags,
@@ -1704,6 +1794,7 @@ return function(context)
         local j, j, visAt = context.character()
         local vector, success, value4 = visAt and visAt.Position, {}, 0
         visAt = os.clock()
+        drawGrid(vector)
         if config.drawHazards then
             local value5, value6 = os.clock(), hazards(argument, sharedValue.list)
             if runtimeState.perf then
@@ -2058,7 +2149,7 @@ return function(context)
                                 )
                             )
                         if config.hazardBabyBlue ~= false then
-                            value16 = context.BABY_BLUE or Color3.fromHex("#89cff0")
+                            value16 = context.BABY_BLUE or Color3.fromHex("#9fb3ad")
                             context.BABY_BLUE = value16
                         end
                         if value11.Color ~= value16 then
@@ -2107,18 +2198,37 @@ return function(context)
         success, argument = pcall(function()
             if config.drawPath and combatBrain.waypoints then
                 local iterateArray2, waypoints = ipairs, combatBrain.waypoints
+                local previousPoint, lineCount = nil, 0
                 for key5, waypoint in iterateArray2(waypoints) do
                     local value7 = key5 == combatBrain.index
+                    local point = waypoint + Vector3.new(0, 0.09, 0)
                     value38 += 1
                     helper9(
                         sharedValue.nodes,
                         value38,
-                        value7 and Color3.fromRGB(120, 200, 255) or Color3.fromRGB(40, 90, 200),
-                        value7 and 2.5 or 1.5,
-                        waypoint + Vector3.new(0, 1.5, 0),
-                        value7 and 0.1 or 0.4
+                        value7 and Color3.fromRGB(176, 190, 163) or Color3.fromRGB(104, 121, 108),
+                        value7 and 1.8 or 1.2,
+                        point,
+                        value7 and 0.18 or 0.42
                     )
+                    -- Join the dashes so the route reads as one continuous line.
+                    if previousPoint then
+                        lineCount += 1
+                        helperLine(
+                            sharedValue.pathLines,
+                            lineCount,
+                            previousPoint,
+                            point,
+                            value7 and Color3.fromRGB(176, 190, 163) or Color3.fromRGB(92, 108, 96),
+                            0.07,
+                            value7 and 0.18 or 0.42
+                        )
+                    end
+                    previousPoint = point
                 end
+                helper10(sharedValue.pathLines, lineCount)
+            else
+                helper10(sharedValue.pathLines, 0)
             end
             local value8 = context.PB
                 and context.PB.boss
@@ -2132,7 +2242,7 @@ return function(context)
                         helper9(
                             sharedValue.nodes,
                             value38,
-                            Color3.fromRGB(255, 210, 90),
+                            Color3.fromRGB(199, 176, 111),
                             2,
                             Vector3.new(champWaypoint[1], champWaypoint[2] + index6 * 3, champWaypoint[3]),
                             0.25
@@ -2162,7 +2272,7 @@ return function(context)
                                     helper9(
                                         sharedValue.nodes,
                                         value38,
-                                        Color3.fromRGB(255, 140, 0),
+                                        Color3.fromRGB(184, 128, 72),
                                         3,
                                         Vector3.new(key7[1], (key7[2] or 0) + 3, key7[3]),
                                         0.2
@@ -2181,7 +2291,7 @@ return function(context)
                                     helper9(
                                         sharedValue.nodes,
                                         value38,
-                                        Color3.fromRGB(0, 255, 120),
+                                        Color3.fromRGB(126, 151, 122),
                                         key8 and 2.2 or 2,
                                         Vector3.new(entry5[1], (entry5[2] or 0) + 1.2 + index7 * 3, entry5[3]),
                                         key8 and 0.1 or 0.3
@@ -2191,10 +2301,10 @@ return function(context)
                         end
                         local iterateArray5, value42 =
                             ipairs, {
-                                { entry4.home, Color3.fromRGB(255, 230, 60) },
+                                { entry4.home, Color3.fromRGB(199, 176, 111) },
                                 {
                                     entry4.strike,
-                                    Color3.fromRGB(255, 80, 220),
+                                    Color3.fromRGB(154, 110, 132),
                                 },
                             }
                         for key9, entry6 in iterateArray5(value42) do
@@ -2260,7 +2370,7 @@ return function(context)
                                 value9, key10 = value46, value47
                             else
                                 if cand.padded then
-                                    value46, value47 = Color3.fromRGB(255, 140, 0), 0.2
+                                    value46, value47 = Color3.fromRGB(184, 128, 72), 0.2
                                     value9, key10 = value46, value47
                                 else
                                     if cand.danger >= dodgeMoveAt then
@@ -2330,7 +2440,7 @@ return function(context)
                         index10 = value57.v == 0 and config.colorFloor
                             or value57.v == 1 and config.colorSoon
                             or value57.v == 2 and config.colorLive
-                            or value57.v == 4 and Color3.fromRGB(255, 140, 0)
+                            or value57.v == 4 and Color3.fromRGB(184, 128, 72)
                             or Color3.fromRGB(120, 122, 132)
                         helper9(
                             sharedValue.scan,
@@ -2349,7 +2459,7 @@ return function(context)
                         helper9(
                             sharedValue.scan,
                             value38,
-                            Color3.fromRGB(80, 160, 255),
+                            Color3.fromRGB(110, 133, 148),
                             2.4,
                             Vector3.new(value56.p.X, value51 + 0.6, value56.p.Z),
                             0.1
@@ -2370,7 +2480,7 @@ return function(context)
                     value38 += 1
                     value4 = sharedValue.wallTags[value38]
                     if if value4 then not value4.Parent else not value4 then
-                        value4 = helper11(helper(), Color3.fromRGB(255, 120, 120))
+                        value4 = helper11(helper(), Color3.fromRGB(176, 107, 107))
                         sharedValue.wallTags[value38] = value4
                     end
                     value4.Adornee, value4.Enabled, value4.text.Text =
@@ -2433,7 +2543,7 @@ return function(context)
                     value38 += 1
                     local value60 = sharedValue.tags[value38]
                     if if value60 then not value60.Parent else not value60 then
-                        value60 = helper11(helper(), Color3.fromRGB(200, 200, 210))
+                        value60 = helper11(helper(), Color3.fromRGB(196, 192, 181))
                         sharedValue.tags[value38] = value60
                     end
                     value60.Adornee = key12
@@ -2503,7 +2613,7 @@ return function(context)
                     value38 = helper7(
                         sharedValue.ring,
                         value38,
-                        Color3.fromRGB(80, 255, 120),
+                        Color3.fromRGB(135, 155, 130),
                         Vector3.new(value64, vector.Y, value65),
                         value66,
                         vector.Y - 2.2,
@@ -2556,7 +2666,7 @@ return function(context)
                     value38 = helper7(
                         sharedValue.ring,
                         value38,
-                        Color3.fromRGB(255, 80, 220),
+                        Color3.fromRGB(154, 110, 132),
                         value68,
                         value4,
                         vector.Y - 2.3,
@@ -2655,7 +2765,7 @@ return function(context)
                     value38 = helper7(
                         sharedValue.groups,
                         value38,
-                        Color3.fromRGB(120, 235, 130),
+                        Color3.fromRGB(146, 171, 145),
                         Vector3.new(entry10.x, 0, entry10.z),
                         key14,
                         (entry10.y or 0) - 2.4,
@@ -2669,7 +2779,7 @@ return function(context)
                 value38 = helper7(
                     sharedValue.groups,
                     value38,
-                    Color3.fromRGB(90, 160, 255),
+                    Color3.fromRGB(110, 133, 148),
                     Vector3.new(argument, 0, visAt),
                     value79,
                     (vector and vector.Y or 0) - 2.4,
@@ -2735,6 +2845,8 @@ return function(context)
         table.clear(sharedValue.parts)
         table.clear(sharedValue.nodes)
         table.clear(sharedValue.spots)
+        table.clear(sharedValue.pathLines)
+        table.clear(sharedValue.grid)
         table.clear(sharedValue.ring)
         table.clear(sharedValue.groups)
         table.clear(sharedValue.tags)

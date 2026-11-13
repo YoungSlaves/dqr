@@ -1043,7 +1043,7 @@ return function(context)
         part.CanQuery = false
         part.CanTouch = false
         part.CastShadow = false
-        part.Material, part.Shape = Enum.Material.Neon, argument or Enum.PartType.Block
+        part.Material, part.Shape = Enum.Material.SmoothPlastic, argument or Enum.PartType.Block
         part.Parent = helper16()
         return part
     end

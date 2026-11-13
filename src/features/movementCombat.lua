@@ -3168,7 +3168,7 @@ return function(context)
                     value6.CanQuery = false
                     value6.CanTouch = false
                     value6.CastShadow = false
-                    value6.Material = Enum.Material.Neon
+                    value6.Material = Enum.Material.SmoothPlastic
                     local value8, value9 = context.gsSweepBar(index)
                     value6.Size = Vector3.new(sweep.w, 0.2, sweep.len)
                     value6.CFrame = CFrame.new(value8, sweep.y + 1.75, value9) * value2
@@ -10266,7 +10266,7 @@ return function(context)
                 or 1
             ghostWall2.Transparency = value8[1]
             ghostWall2.Color = Color3.fromRGB(255, 60, 60)
-            ghostWall2.Material = Enum.Material.Neon
+            ghostWall2.Material = Enum.Material.SmoothPlastic
             local value9 = Instance.new("PathfindingModifier")
             value9.Label = "GhostWall"
             value9.PassThrough = false

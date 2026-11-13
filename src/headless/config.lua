@@ -108,16 +108,22 @@ return function(Context)
             DrawLeads = true,
             DrawNoGo = true,
             DrawWaypoints = true,
+            Grid = true,
+            GridRadius = 96,
+            GridStep = 6,
+            GridColor = "#4a5148",
+            GridTransparency = 0.72,
+            ChineseHat = true,
             Labels = false,
             MarkerScale = 1,
             SpotRadius = 48,
             SpotStep = 8,
             SpotEvery = 0.35,
-            SafeColor = "#3cdc78",
-            SoonColor = "#ffdc28",
-            DangerColor = "#ff3232",
-            TargetColor = "#ffffff",
-            AbilityColor = "#50c8ff",
+            SafeColor = "#879b82",
+            SoonColor = "#c2a164",
+            DangerColor = "#a8615e",
+            TargetColor = "#e4ddca",
+            AbilityColor = "#7f95a3",
         },
         Logging = { Debug = false, AutosaveSeconds = 10 },
     }
@@ -397,6 +403,12 @@ return function(Context)
     Set("drawLeads", Visuals.DrawLeads ~= false)
     Set("drawNoGo", Visuals.DrawNoGo ~= false)
     Set("drawWaypoints", Visuals.DrawWaypoints ~= false)
+    Set("drawGrid", Visuals.Grid ~= false)
+    Set("gridRadius", tonumber(Visuals.GridRadius) or CFG.gridRadius)
+    Set("gridStep", tonumber(Visuals.GridStep) or CFG.gridStep)
+    Set("gridTransparency", tonumber(Visuals.GridTransparency) or CFG.gridTransparency)
+    Set("colorGrid", Hex(Visuals.GridColor, CFG.colorGrid or Color3.fromHex("#4a5148")))
+    Set("chineseHat", Visuals.ChineseHat ~= false)
     Set("labelHazards", Visuals.Labels == true)
     Set("labelUnknown", Visuals.Labels == true)
     Set("markerScale", tonumber(Visuals.MarkerScale) or CFG.markerScale)

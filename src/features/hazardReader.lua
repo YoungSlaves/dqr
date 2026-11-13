@@ -4409,7 +4409,7 @@ return function(context)
             lane.CanQuery = false
             lane.CanTouch = false
             lane.CastShadow = false
-            lane.Material, lane.Color = Enum.Material.Neon, Color3.fromRGB(60, 235, 95)
+            lane.Material, lane.Color = Enum.Material.SmoothPlastic, Color3.fromRGB(96, 132, 94)
             lane.Transparency = 0.55
             lane.Parent = hlVyLane
         end

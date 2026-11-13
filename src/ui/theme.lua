@@ -5,21 +5,22 @@ return function(context)
     local theme = {}
 
     -- ---------------------------------------------------------------- palette
+    -- Earthy ink-and-paper palette: no fluorescent or glow colours.
     local P = {
-        DeepForest = Color3.fromHex("070b12"),
-        Moss = Color3.fromHex("0d1624"),
-        Fern = Color3.fromHex("55c8ff"),
-        LeafLight = Color3.fromHex("75f2c7"),
-        Bark = Color3.fromHex("24384f"),
-        Wood = Color3.fromHex("111e30"),
-        Parchment = Color3.fromHex("eaf7ff"),
-        Firefly = Color3.fromHex("c8ff6a"),
-        Hot = Color3.fromHex("ff6fd8"),
-        Muted = Color3.fromHex("8fa7be"),
+        DeepForest = Color3.fromHex("0d1210"),
+        Moss = Color3.fromHex("17211b"),
+        Fern = Color3.fromHex("748b71"),
+        LeafLight = Color3.fromHex("a6b79a"),
+        Bark = Color3.fromHex("4a3d31"),
+        Wood = Color3.fromHex("26221c"),
+        Parchment = Color3.fromHex("e7dfcb"),
+        Firefly = Color3.fromHex("c7ad76"),
+        Hot = Color3.fromHex("a35f52"),
+        Muted = Color3.fromHex("8d897b"),
     }
     local SEMANTIC = {
-        warning = Color3.fromHex("ffc857"),
-        danger = Color3.fromHex("ff6b7a"),
+        warning = Color3.fromHex("c4a15e"),
+        danger = Color3.fromHex("a45f5f"),
     }
 
     local function dim(color, alpha)

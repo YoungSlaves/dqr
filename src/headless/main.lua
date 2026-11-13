@@ -358,6 +358,7 @@ return function(Context)
     local ToggleGui, ToggleButton, PowerButton, PerfButton, BlackButton, SpoofButton, ResetButton
     local HudGui, HudPanel, HudLabels
     local BlackGui, SpoofGui, SpoofPanel, SpoofToggle
+    local HatModel, HatConnection
     local SpoofFields = {}
     local SpoofOriginals = {}
     local SpoofFakes = {}
@@ -856,6 +857,78 @@ return function(Context)
             pcall(ApplySpoof)
         end
     end)
+
+    -- A small local-only straw hat built from flat cylinders. It is welded to
+    -- the head, uses no external asset, and never glows.
+    local function RemoveChineseHat()
+        if HatModel then
+            pcall(HatModel.Destroy, HatModel)
+            HatModel = nil
+        end
+    end
+
+    local function BuildChineseHat(Character, Head)
+        RemoveChineseHat()
+        local Existing = Character:FindFirstChild("SwangyChineseHat")
+        if Existing then
+            Existing:Destroy()
+        end
+        local Hat = Instance.new("Model")
+        Hat.Name = "SwangyChineseHat"
+        local function Disc(Name, Y, Radius, Height, Color)
+            local Part = Instance.new("Part")
+            Part.Name = Name
+            Part.Anchored = false
+            Part.CanCollide = false
+            Part.CanQuery = false
+            Part.CanTouch = false
+            Part.CastShadow = false
+            Part.Massless = true
+            Part.Material = Enum.Material.SmoothPlastic
+            Part.Shape = Enum.PartType.Cylinder
+            Part.Size = Vector3.new(Height, Radius * 2, Radius * 2)
+            Part.Color = Color
+            Part.CFrame = Head.CFrame * CFrame.new(0, Y, 0) * CFrame.Angles(0, 0, math.rad(90))
+            Part.Parent = Hat
+            local Weld = Instance.new("WeldConstraint")
+            Weld.Part0 = Head
+            Weld.Part1 = Part
+            Weld.Parent = Part
+            return Part
+        end
+        Disc("Brim", 1.15, 2.2, 0.1, Color3.fromRGB(166, 139, 94))
+        Disc("Band", 1.23, 2.04, 0.1, Color3.fromRGB(119, 52, 45))
+        for Index = 1, 7, 1 do
+            local Radius = 1.85 - (Index - 1) * 0.22
+            Disc(
+                "Cone" .. tostring(Index),
+                1.3 + (Index - 1) * 0.14,
+                math.max(Radius, 0.3),
+                0.14,
+                Index % 2 == 0 and Color3.fromRGB(188, 160, 108) or Color3.fromRGB(156, 130, 88)
+            )
+        end
+        Hat.Parent = Character
+        HatModel = Hat
+    end
+
+    local function UpdateChineseHat()
+        if CFG.chineseHat == false or RT.destroyed then
+            RemoveChineseHat()
+            return
+        end
+        local Player = Context.LocalPlayer or (Context.Players and Context.Players.LocalPlayer)
+        local Character = Player and Player.Character
+        local Head = Character and Character:FindFirstChild("Head")
+        if not Head then
+            RemoveChineseHat()
+            return
+        end
+        if HatModel and HatModel.Parent == Character then
+            return
+        end
+        BuildChineseHat(Character, Head)
+    end
 
     local function SetEnabled(Enabled, Save)
         if Enabled and not Save and Global.SwangyManualOff == true then
@@ -1380,6 +1453,14 @@ return function(Context)
     SetEnabled(not ManualOff and Automation.Enabled ~= false, false)
     BuildToggle()
     BuildHUD()
+    UpdateChineseHat()
+    HatConnection = RunService.Heartbeat:Connect(function()
+        if RT.destroyed or os.clock() - (RT.hatAt or 0) < 0.5 then
+            return
+        end
+        RT.hatAt = os.clock()
+        pcall(UpdateChineseHat)
+    end)
     if RT.BlackScreen then
         BuildBlackScreen()
         if RunService and RunService.Set3dRenderingEnabled then
@@ -1456,6 +1537,11 @@ return function(Context)
             pcall(Context.clearDrawing)
         end
         RestoreSpoof()
+        RemoveChineseHat()
+        if HatConnection then
+            pcall(HatConnection.Disconnect, HatConnection)
+            HatConnection = nil
+        end
         FreeMovement()
         if Context.toggleDragConnections then
             for _, DragConnection in ipairs(Context.toggleDragConnections) do

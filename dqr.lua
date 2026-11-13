@@ -563,7 +563,7 @@ local function main()
 
     setStatus("fetching manifest")
     for attempt = 1, 2 do
-        local url = MANIFEST_URL .. (attempt > 1 and ("?t=" .. tostring(os.time())) or "")
+        local url = MANIFEST_URL .. "?t=" .. tostring(os.time()) .. "&attempt=" .. tostring(attempt)
         local body = fetch(url)
         if body then
             local ok, parsed = pcall(HttpService.JSONDecode, HttpService, body)
@@ -589,11 +589,8 @@ local function main()
         local failures = 0
         sources = {}
         for index, module in ipairs(manifest.modules) do
-            local url = base .. module.path
+            local url = base .. module.path .. "?t=" .. tostring(os.time()) .. "&i=" .. tostring(index)
             local body = fetch(url)
-            if not body then
-                body = fetch(url .. (url:find("?", 1, true) and "&" or "?") .. "t=" .. tostring(os.time()))
-            end
             if body then
                 sources[module.name] = body
                 fetched += 1

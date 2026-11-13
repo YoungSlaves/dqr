@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "minLoader": 2,
   "basePath": "https://raw.githubusercontent.com/YoungSlaves/dqr/main/",
   "modules": [
